@@ -40,6 +40,7 @@ FILES=(
   tooling/src/board.mjs
   tooling/src/cli.mjs
   tooling/src/context.mjs
+  tooling/src/cycle.mjs
   tooling/src/doctor.mjs
   tooling/src/roles.mjs
   tooling/src/templates.mjs

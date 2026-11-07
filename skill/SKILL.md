@@ -81,8 +81,13 @@ to paste at each stage. The short version:
 7. **operate** — schedules for the daily report, the support triage and the
    weekly metrics read.
 
-`node tooling/src/cli.mjs cycle` prints which stage the project is at and the
-next action, computed from the artefacts on disk.
+The **Company board** panel shows which stage the project is at and offers a
+button that copies the exact prompt for the next step. The same computation is
+available headless as `node tooling/src/cli.mjs cycle`.
+
+**The user operates from the GUI, not a terminal.** Do not hand them shell
+commands to run — run them yourself, or drive the panel. When you do need to hand
+them something, put it in the chat as a prompt to paste, not a command to type.
 
 The only four things the human decides: the charter, spec approval, the review
 verdict, and the six founder gates. Everything else is an agent's job.

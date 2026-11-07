@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.0
+
+- **The panel is the operator's console.** The board page now opens with the
+  next step: the stage you are at, computed from the artefacts on disk, and a
+  button that copies the exact prompt to hand to an agent. **Run the checks**
+  runs the same consistency checks as `opc doctor` on the host and lists what it
+  found. Together with Bootstrap this means the whole cycle is operated from the
+  GUI — no terminal, no commands to type.
+- `tooling/src/cycle.mjs`: the stage computation moved out of the CLI so the
+  panel and `opc cycle` render the same object and cannot disagree.
+- Two new Remote methods, `cycle` and `doctor`, both resolved by workspace id.
+- README and the skill are now written for someone who never opens a terminal;
+  the CLI is documented as the headless/agent path.
+- The skill tells an agent explicitly not to hand the user shell commands.
+
 ## 0.6.1
 
 - `scripts/install-local.sh`: install this working copy into a DSH profile and

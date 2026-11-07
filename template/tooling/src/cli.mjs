@@ -26,6 +26,7 @@ import {
 } from './templates.mjs'
 import { ROLES, FOUNDER_GATES } from './roles.mjs'
 import { loadTasks, renderBoard, boardSummary, decorate, readyTasks } from './board.mjs'
+import { computeCycle } from './cycle.mjs'
 import { buildContextPack } from './context.mjs'
 import { doctor, renderDoctor } from './doctor.mjs'
 
@@ -483,114 +484,59 @@ function newFile(root, kind, title) {
 }
 
 /**
- * `opc cycle` — where the project actually is, and what the next action is.
- *
- * The pipeline has seven stages and the board only knows about tasks, so the
- * question a founder asks every morning is "what do I do next?". This answers it
- * from the artefacts on disk rather than from memory.
+ * `opc cycle` — render computeCycle() as text. The panel renders the same
+ * object, so the CLI and the GUI cannot disagree about the stage.
  */
 function showCycle(root) {
-  const read1 = (rel) => {
-    const path = join(root, rel)
-    return exists(path) ? read(path) : ''
-  }
-
-  const charter = read1('company/charter.md')
-  const charterFilled = charter !== '' && !/^#\s*Untitled Company/m.test(charter) && !/<!--[\s\S]*?-->/.test(charter.replace(/<!--[\s\S]*?-->\n/g, ''))
-
-  const specsDir = join(root, 'company', 'specs')
-  const specFiles = exists(specsDir)
-    ? listFiles(specsDir, '.md').filter((f) => !/^README/i.test(f))
-    : []
-  const specs = specFiles.map((f) => {
-    const { data } = parseFrontmatter(read(join(specsDir, f)))
-    return { file: `company/specs/${f}`, status: data.status || 'unknown', title: data.title || f }
-  })
-  const approved = specs.filter((s) => s.status === 'approved')
-  const draft = specs.filter((s) => s.status !== 'approved')
-
-  const tasks = decorate(loadTasks(root), root)
-  const ready = readyTasks(tasks)
-  const count = (status) => tasks.filter((t) => t.status === status).length
-
+  const { facts, stage } = computeCycle(root)
   const line = (label, value) => `  ${label.padEnd(22)}${value}`
-  const out = []
-  out.push('')
-  out.push('Company cycle')
-  out.push('')
-  out.push(line('charter', charterFilled ? 'written' : 'NOT written'))
-  out.push(line('specs', specs.length === 0 ? 'none' : `${specs.length} (${approved.length} approved, ${draft.length} not)`))
-  out.push(line('tasks', tasks.length === 0 ? 'none' : `${tasks.length}`))
-  if (tasks.length) {
-    out.push(line('  ready', String(ready.length)))
-    out.push(line('  in progress', String(count('in_progress'))))
-    out.push(line('  in review', String(count('review'))))
-    out.push(line('  done', String(count('done'))))
-    out.push(line('  blocked', String(count('blocked'))))
-  }
-  out.push('')
 
-  // The first thing that is not done, in pipeline order.
-  if (!charterFilled) {
-    out.push('Stage 1 — write the charter.')
-    out.push('  Ask an agent:')
-    out.push('    "Use the one-person-company skill. Ask me five questions about who')
-    out.push('     this is for and what it costs them, then write company/charter.md."')
-  } else if (specs.length === 0) {
-    out.push('Stage 2 — write the first spec.')
-    out.push('  Ask an agent:')
-    out.push('    "Read company/charter.md. Write a spec in company/specs/ with')
-    out.push('     5-8 numbered AC-n criteria a test could check. status: draft."')
-  } else if (approved.length === 0) {
-    out.push('Stage 2 — approve a spec.')
-    out.push('  Read it. Each AC-n must be checkable without asking a question.')
-    out.push('  Then: "The acceptance criteria are fine. Set status: approved."')
-    const s0 = draft[0]
-    if (s0) out.push(`  Waiting: ${s0.file}`)
-  } else if (tasks.length === 0) {
-    out.push('Stage 3 — decompose the spec into tasks.')
-    out.push('  Ask an agent:')
-    out.push('    "Read the approved spec. Decompose it with')
-    out.push('     node tooling/src/cli.mjs new task, each with owner, writes and a')
-    out.push('     runnable verification command. doctor must report 0 errors."')
-    out.push(`  Spec: ${approved[approved.length - 1].file}`)
-  } else if (count('review') > 0) {
-    const first = tasks.find((t) => t.status === 'review')
-    out.push('Stage 5 — review what is finished.')
-    out.push(`  ${first.id}: ${first.title}`)
-    out.push('  Hand it to a read-only reviewer: "assume the work is wrong, cite file:line,')
-    out.push('  and check docs/architecture against the change. One word: approve,')
-    out.push('  request changes, or escalate."')
-    out.push(`  Then: node tooling/src/cli.mjs pack ${first.id}`)
-  } else if (ready.length > 0) {
-    const next = ready.find((t) => t.priority === 'P0') || ready.find((t) => t.priority === 'P1') || ready[0]
-    out.push('Stage 4 — build the next task.')
-    out.push(`  ${next.id}: ${next.title}  (${next.owner || 'unowned'})`)
-    out.push(`    node tooling/src/cli.mjs pack ${next.id} > /tmp/ctx.md`)
-    out.push('  Paste /tmp/ctx.md into a subagent with: "do this task, stay inside the')
-    out.push('  write scope, run the verification command, paste the real output."')
-  } else if (count('in_progress') > 0) {
-    out.push('Stage 4 — something is in progress but nothing is startable.')
-    out.push('  Either finish what is in progress, or clear the dependency that blocks the board:')
-    for (const t of tasks.filter((t) => t.status === 'in_progress')) {
-      out.push(`    ${t.id}  ${t.title}  (${t.owner || 'unowned'})`)
-    }
-    out.push('  Check with: node tooling/src/cli.mjs doctor')
-  } else if (count('blocked') > 0) {
-    out.push('Something is blocked. Unblock it, or drop it.')
-    for (const t of tasks.filter((t) => t.status === 'blocked')) {
-      out.push(`  ${t.id}  ${t.title}`)
-    }
-  } else {
-    out.push('Stage 7 — the board is clear.')
-    out.push('  Read company/metrics.md, then write ONE direction sentence into')
-    out.push('  company/roadmap.md. Then delete one thing.')
+  console.log('')
+  console.log('Company cycle')
+  console.log('')
+  console.log(line('charter', facts.charterFilled ? 'written' : 'NOT written'))
+  console.log(
+    line(
+      'specs',
+      facts.specs.total === 0
+        ? 'none'
+        : `${facts.specs.total} (${facts.specs.approved} approved, ${facts.specs.unapproved} not)`
+    )
+  )
+  console.log(line('tasks', facts.tasks.total === 0 ? 'none' : String(facts.tasks.total)))
+  if (facts.tasks.total) {
+    console.log(line('  ready', String(facts.tasks.ready)))
+    console.log(line('  in progress', String(facts.tasks.inProgress)))
+    console.log(line('  in review', String(facts.tasks.review)))
+    console.log(line('  done', String(facts.tasks.done)))
+    console.log(line('  blocked', String(facts.tasks.blocked)))
   }
+  console.log('')
+  console.log(`Stage ${stage.n} — ${stage.title}.`)
+  console.log(`  ${stage.detail}`)
+  console.log('')
+  console.log(`  ${stage.actor === 'human' ? 'You' : 'Ask an agent'} (copy this):`)
+  for (const l of wrap(stage.prompt, 68)) console.log(`    ${l}`)
+  console.log('')
+  console.log(`  Full walkthrough: ${stage.walkthrough}`)
+  console.log('')
+}
 
-  out.push('')
-  out.push('  Full walkthrough: playbook/12-the-full-cycle.md')
-  out.push('')
-  console.log(out.join('\n'))
+/** Wrap one paragraph to a column width, for the terminal only. */
+function wrap(text, width) {
+  const words = String(text).split(/\s+/)
+  const lines = []
+  let current = ''
+  for (const w of words) {
+    if (current.length + w.length + 1 > width) {
+      lines.push(current)
+      current = w
+    } else {
+      current = current === '' ? w : `${current} ${w}`
+    }
+  }
+  if (current !== '') lines.push(current)
+  return lines
 }
 
 function showBoard(root, opts) {

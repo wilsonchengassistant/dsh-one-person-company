@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="screenshots/board.png" alt="The Company board dialog listing 15 tasks with status pills, owners and dependencies" width="880">
+  <img src="screenshots/board.png" alt="The Company board: the next step with a copy-the-prompt button, the checks with their findings, and the task table" width="880">
 </p>
 
 <h1 align="center">dsh-one-person-company</h1>
@@ -39,31 +39,44 @@ Restart the host and refresh the page. Two things appear:
 2. **A "Company board" panel row** in the sidebar, beside *Plugins* and
    *Automation tasks*.
 
-## Quick start — entirely inside the GUI
+## Quick start — everything in the GUI
+
+You never open a terminal. The panel is the operator's console.
 
 1. Add a workspace in DSH as you normally would. An empty folder is fine.
-2. Open **Company board** — a panel row in the sidebar, beside *Plugins* and
-   *Automation tasks*.
-3. It reports *this workspace has no company OS yet* and offers **Bootstrap this
+2. Open **Company board** in the sidebar, beside *Plugins* and *Automation tasks*.
+3. It says *this workspace has no company OS yet* and offers **Bootstrap this
    workspace**. Click it.
-4. The board appears. Ask an agent to write the charter and the first spec.
+4. The page now shows **the next step** — the stage you are at, what it means, and
+   a button that copies the exact prompt to hand to an agent.
+5. Paste it into a chat with an agent. When the agent is done, press **Refresh**.
 
-No terminal, no commands. The button runs the bundled `bootstrap.sh` on the host,
-against the path the workspace registry already holds.
+That is the whole interface. Every stage of the cycle is driven from this page:
+the prompt tells the agent what to do, **Run the checks** tells you whether the
+result is real, and the board tells you what is left.
 
-### Or from a terminal, if you prefer
+![The next step, with a button that copies the prompt for the agent](screenshots/next-step.png)
+
+| On the page | What it does |
+|---|---|
+| **The next-step card** | the stage, computed from the artefacts on disk — charter written, specs approved, tasks ready / in progress / in review |
+| **Copy the prompt for the agent** | puts the exact instruction in your clipboard |
+| **Run the checks** | runs the ~30 consistency checks on the host and lists what it found |
+| **The board** | every task with status, owner, priority and dependencies |
+| **Bootstrap this workspace** | creates the company OS in a folder that has none |
+
+### For agents and CI, not for you
+
+The same operations have a CLI, because an agent or a CI job has no clipboard:
 
 ```sh
-opc bootstrap ~/Projects/my-company        # or: bash bootstrap.sh ~/Projects/my-company
-cd ~/Projects/my-company
-
-$EDITOR company/charter.md                 # the one thing a human must write
-node tooling/src/cli.mjs new spec "Your first feature"
-node tooling/src/cli.mjs new task "First slice" \
-  --spec company/specs/<file>.md --owner agent:engineer --writes "apps/**"
-node tooling/src/cli.mjs doctor            # ~30 consistency checks
-node tooling/src/cli.mjs board --ready
+node tooling/src/cli.mjs cycle     # the same object the panel renders
+node tooling/src/cli.mjs doctor
+node tooling/src/cli.mjs pack T-0003 > /tmp/ctx.md
 ```
+
+Running `opc` by hand is never required to operate the company. It exists so the
+pipeline can run headless.
 
 ## What you get
 
@@ -90,9 +103,10 @@ playbook/                  13 documents, including 12-the-full-cycle.md
 
 ### The board
 
-![The Company board dialog](screenshots/board.png)
+![The Company board](screenshots/board.png)
 
-Summary counts, and every task with its status, priority, owner and
+The next step with its copy-the-prompt button, the consistency checks with what
+they found, summary counts, and every task with its status, priority, owner and
 dependencies. `Ready · can start` marks tasks whose dependencies are done *and*
 whose spec is approved; `waits 3` marks the ones that are not.
 
@@ -185,11 +199,8 @@ charter → spec → tasks → build → test+review → deploy → operate
                                                        you click it
 ```
 
-Ask the CLI where you are:
-
-```sh
-node tooling/src/cli.mjs cycle
-```
+The page tells you where you are — and for a headless run, so does
+`node tooling/src/cli.mjs cycle`:
 
 ```
 Company cycle
@@ -286,7 +297,9 @@ No. Zero API calls. It assembles context and checks invariants. The model is the
 one you already have in the harness.
 
 **Do I need DSH to use it?**
-Only for the sidebar panel. The CLI and the workflow are plain files and Node.
+No, but the panel is the point: it is the operator's console, and it removes the
+terminal from the loop. Without DSH the same workflow still runs from the CLI,
+which is also what an agent or a CI job uses.
 
 **Will bootstrapping clobber my existing project?**
 No. It copies `tooling/`, `playbook/`, `package.json` and `.gitignore`, merges

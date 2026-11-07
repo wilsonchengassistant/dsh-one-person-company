@@ -3,8 +3,15 @@
     {
       "file": "screenshots/board.png",
       "caption": {
-        "en": "The Company board as a sidebar panel, beside Plugins and Automation tasks: summary counts, and every task with its status, owner and dependencies.",
-        "zh": "公司看板是个侧边栏面板，跟 Plugins、Automation tasks 并列：统计数字，以及每个任务的状态、负责人与依赖。"
+        "en": "The Company board: the next step with a copy-the-prompt button, the consistency checks with their findings, and every task with its status, owner and dependencies.",
+        "zh": "公司看板：下一步（含一键复制 prompt）、一致性检查与结果、以及每个任务的状态、负责人、依赖。"
+      }
+    },
+    {
+      "file": "screenshots/next-step.png",
+      "caption": {
+        "en": "The next step, computed from the artefacts on disk: the stage, what it means, and a button that copies the exact prompt to hand to an agent.",
+        "zh": "下一步：由磁盘上的文件算出来 —— 当前阶段、含义，以及一个按钮，把该交给 agent 的 prompt 直接复制。"
       }
     },
     {
