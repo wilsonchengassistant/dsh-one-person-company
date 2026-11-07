@@ -36,12 +36,14 @@ Restart the host and refresh the page. Two things appear:
 
 1. **A `one-person-company` skill** in every workspace's catalog — ask an agent
    *"use the one-person-company skill to start a project here"*.
-2. **A "Company board" button** in the sidebar footer.
+2. **A "Company board" panel row** in the sidebar, beside *Plugins* and
+   *Automation tasks*.
 
 ## Quick start — entirely inside the GUI
 
 1. Add a workspace in DSH as you normally would. An empty folder is fine.
-2. Open **Company board** in the sidebar footer.
+2. Open **Company board** — a panel row in the sidebar, beside *Plugins* and
+   *Automation tasks*.
 3. It reports *this workspace has no company OS yet* and offers **Bootstrap this
    workspace**. Click it.
 4. The board appears. Ask an agent to write the charter and the first spec.
@@ -100,12 +102,6 @@ whose spec is approved; `waits 3` marks the ones that are not.
 A workspace with no `company/` folder is not an error — it is the one click
 between you and a working company OS. The button runs the bootstrap on the host;
 the path stays available for copying if you would rather run it yourself.
-
-### The button
-
-![The Company board button in the sidebar footer](screenshots/sidebar-button.png)
-
-One button, always in the same place.
 
 ### The CLI
 
@@ -172,10 +168,11 @@ that lives only in a prompt is context, not a control.
   endpoints, so there is no route, no permission, and no extra attack surface.
 - **It imports the template's own parser** — `template/tooling/src/board.mjs` —
   so the panel and `opc board` can never disagree about what is ready.
-- **Browser half** (`lib/client.js`) contributes one button to the
-  `sidebar.footer.action` list slot and renders the board in a dialog. A refused
-  seat degrades to a warning instead of failing the client entry, because a
-  throw there takes the whole GUI down with it.
+- **Browser half** (`lib/client.js`) contributes two registrations, exactly the
+  pair Plugins and Automation tasks use: a row in `sidebar.panellist` (its nav
+  list, `order: 20`) and a page in `main` keyed by the same panel id. The board
+  is therefore a normal panel — it selects, deep-links and survives a reload the
+  way the built-in panels do, with no overlay or z-index of its own.
 - **Bootstrap runs on the host, by workspace id.** The client never sends a
   path, so the button can only write into a folder already registered as a
   workspace. It refuses a workspace that already has `company/tasks`.
@@ -252,6 +249,7 @@ actually goes missing. The charters cost nothing until used.
 ## Roadmap
 
 - [x] Bootstrap a workspace from the GUI (0.2.0)
+- [x] The board is a sidebar panel row, not a footer button (0.3.0)
 - [ ] `doctor --json` for CI
 - [ ] A task detail view in the panel (read a task body without a terminal)
 - [ ] Run `doctor` from the panel and show a health badge

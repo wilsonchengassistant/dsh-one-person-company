@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+- **The board is now a sidebar panel row**, not a button in the footer. It sits
+  in the same list as Plugins and Automation tasks (`order: 20`, so after them),
+  selects like any other panel, and remembers its selection across a reload. The
+  dialog overlay, the z-index and the portal are gone: the board is a full page
+  in the main area, which is what the other panels do.
+- Registered through `sidebar.panellist` (the row) plus `main` keyed by the same
+  panel id (the page) — the same pair Plugins and Automation tasks use.
+
 ## 0.2.0
 
 - **Bootstrap from the GUI.** A workspace with no company OS now offers a

@@ -3,8 +3,8 @@
     {
       "file": "screenshots/board.png",
       "caption": {
-        "en": "The Company board: summary counts, and every task with its status, owner and dependencies. Ready tasks are marked 'can start'; the rest show how many dependencies they wait on.",
-        "zh": "公司看板：统计数字，以及每个任务的状态、负责人与依赖。可开始的任务标为 “can start”，其余显示还等几个前置。"
+        "en": "The Company board as a sidebar panel, beside Plugins and Automation tasks: summary counts, and every task with its status, owner and dependencies.",
+        "zh": "公司看板是个侧边栏面板，跟 Plugins、Automation tasks 并列：统计数字，以及每个任务的状态、负责人与依赖。"
       }
     },
     {
@@ -12,13 +12,6 @@
       "caption": {
         "en": "A workspace with no company OS yet: one click builds it — the tooling, the ten role charters, the playbook and the research briefs, plus an empty charter and task board.",
         "zh": "尚未建立公司系统的工作区：一键建好 — 工具链、十份角色设定、playbook、研究简报，以及空的 charter 与任务板。"
-      }
-    },
-    {
-      "file": "screenshots/sidebar-button.png",
-      "caption": {
-        "en": "The Company board button, always in the sidebar footer.",
-        "zh": "公司看板按钮，固定位于侧边栏底部。"
       }
     },
     {

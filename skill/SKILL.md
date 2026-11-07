@@ -23,7 +23,8 @@ prompt trustworthy.
 
 ## Bootstrap a new workspace
 
-**From the GUI:** open **Company board** in the sidebar footer. A workspace with
+**From the GUI:** open **Company board** — it is a panel row in the sidebar, beside
+Plugins and Automation tasks. A workspace with
 no company OS offers a *Bootstrap this workspace* button, which does the same
 thing as the command below. That is the intended path for a user who does not
 want a terminal.
@@ -109,7 +110,8 @@ The link between two files has a name:
 
 ## The sidebar panel
 
-The plugin also adds a **Company board** button to the sidebar footer. It opens
+The plugin adds **Company board** as a panel row in the sidebar, beside Plugins and
+Automation tasks. It opens
 the board for whichever registered workspace carries a `company/` folder: task id,
 status, priority, owner, dependencies, and which tasks are startable right now.
 It reads the same parser the CLI uses, so the panel and `opc board` cannot
