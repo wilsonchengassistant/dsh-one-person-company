@@ -128,7 +128,41 @@ else
 fi
 
 # --------------------------------------------------------------------------
-section "9. The architecture template still has its four diagrams"
+section "9. The shipped machine is generic (no instance state, no local paths)"
+if [ -d template/examples ]; then
+  bad "template/examples exists — a plugin for everyone must not ship one product's demo"
+else
+  ok "template/examples absent"
+fi
+
+# The template is what every user bootstraps. Instance state must never be here.
+instance_hits=0
+for f in template/company/charter.md template/company/metrics.md \
+         template/company/budget.md template/company/roadmap.md; do
+  [ -e "$f" ] && { bad "instance state in the template: $f"; instance_hits=$((instance_hits+1)); }
+done
+if [ -d template/company/specs ] && [ -n "$(find template/company/specs -name '*.md' ! -name 'README.md' 2>/dev/null)" ]; then
+  bad "template/company/specs contains a real spec"; instance_hits=$((instance_hits+1))
+fi
+if [ -d template/company/tasks ] && [ -n "$(find template/company/tasks -name 'T-*.md' 2>/dev/null)" ]; then
+  bad "template/company/tasks contains real tasks"; instance_hits=$((instance_hits+1))
+fi
+if [ -d template/company/decisions ] && [ -n "$(find template/company/decisions -name 'ADR-*.md' 2>/dev/null)" ]; then
+  bad "template/company/decisions contains a real ADR"; instance_hits=$((instance_hits+1))
+fi
+[ "$instance_hits" -eq 0 ] && ok "no instance state under template/company/"
+
+# Local identity and paths must never ship.
+leaks=$(grep -rniE '/Users/|wilsons-macbook|tail9d70ea|wilsonchengassistant@|One Person Company' template/ 2>/dev/null | grep -v 'One Person Company — Company Charter' || true)
+if [ -z "$leaks" ]; then
+  ok "no home path, hostname or maintainer identity in the template"
+else
+  bad "instance identity in the template:"
+  echo "$leaks" | head -5 | sed 's/^/      /'
+fi
+
+# --------------------------------------------------------------------------
+section "10. The architecture template still has its four diagrams"
 arch="template/tooling/src/templates.mjs"
 count=$(grep -c 'mermaid' "$arch" 2>/dev/null || echo 0)
 if [ "$count" -ge 4 ]; then ok "$count mermaid references in the template"; else bad "only $count mermaid references — expected at least 4"; fi
@@ -138,7 +172,7 @@ done
 
 # --------------------------------------------------------------------------
 if [ "$RELEASE" -eq 1 ]; then
-  section "10. Release artefacts"
+  section "11. Release artefacts"
   if npm pack --dry-run 2>&1 | grep -q 'template/tooling/src/cli.mjs'; then
     ok "the npm tarball includes the bundled machine"
   else

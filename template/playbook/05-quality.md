@@ -213,9 +213,9 @@ Procedure:
 4. Any endpoint or behaviour in the code that the spec does not describe is a
    finding: undocumented surface.
 
-In the worked example, `T-0007` exists precisely for this: one test suite that
-proves no user can see another user's data. It is the cheapest insurance in
-the company and the most expensive mistake to skip.
+The classic case is isolation: one test suite that proves no user can see
+another user's data, covering every endpoint the spec names. It is the cheapest
+insurance in the company and the most expensive mistake to skip.
 
 ## Evals: measure tasks, not benchmarks
 

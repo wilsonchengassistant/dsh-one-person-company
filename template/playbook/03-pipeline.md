@@ -223,7 +223,7 @@ entire review loop, and it is what keeps quality from silently decaying.
 
 ## Running one task end to end
 
-This is the concrete loop, using the worked example in `company/`.
+This is the concrete loop, against whatever is on the board.
 
 ```sh
 # 1. PM agent picks the next approved spec, writes the tasks

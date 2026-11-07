@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.0
+
+- **The shipped machine is generic.** `template/examples/` is gone: it carried a
+  worked product's task seeds, and a plugin for everyone should not ship one
+  product's state. `bootstrap.sh` no longer copies it, and the README, skill and
+  playbook no longer point at it.
+- `scripts/preflight.sh` now fails if anything instance-specific creeps back into
+  `template/`: a real home path, a user name, the maintainer's workspace name, or
+  any instance state under `template/company/` (a charter, a spec, a task, an
+  ADR, metrics, a budget, a roadmap).
+- `playbook/05` and `playbook/03` no longer refer to "the worked example", so a
+  bootstrapped workspace does not read a reference to a demo it does not have.
+
 ## 0.4.1
 
 - `scripts/preflight.sh`: the checks that stop "I pushed" from meaning nothing —

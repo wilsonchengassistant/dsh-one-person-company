@@ -46,7 +46,7 @@ What you get:
 | `playbook/` — the 12-document guide | `company/metrics.md`, `budget.md`, `roadmap.md` |
 | `company/AGENTS.md` — the eight rules | `company/specs/`, `tasks/`, `decisions/`, `playbooks/` |
 | `company/research/` — 4 source-linked briefs | `.agent/roles/` — the 10 role charters |
-| `examples/` — the worked receipt-ledger example | `.agent/checklists/` — DoD, review, pre-ship |
+ `.agent/checklists/` — DoD, review, pre-ship |
 | `package.json`, `.gitignore` | `AGENTS.md` — the workspace manual |
 
 Never copy a product's `company/specs/`, `tasks/` or `charter.md` into a new
@@ -133,9 +133,6 @@ disagree. Use it to check the board without breaking a terminal session.
   fill them in. That is the check working, not a failure.
 - A fresh workspace has two warnings: no tasks yet, and no direction sentence in
   `company/roadmap.md`. Both clear once real work starts.
-- The demo product in `examples/` describes a product that lives in another
-  repository, so its `pnpm` verification commands are illustrative. Only
-  `node tooling/src/cli.mjs …` commands run inside the company workspace itself.
 
 ## Where to read more
 

@@ -241,9 +241,8 @@ one you already have in the harness.
 Only for the sidebar panel. The CLI and the workflow are plain files and Node.
 
 **Will bootstrapping clobber my existing project?**
-No. It copies `tooling/`, `playbook/`, `examples/`, `package.json` and
-`.gitignore`, merges six reusable company files, and generates the rest only
-where absent.
+No. It copies `tooling/`, `playbook/`, `package.json` and `.gitignore`, merges
+the reusable company files, and generates the rest only where absent.
 
 **How is this different from a TODO list?**
 A task cannot be *ready* without an approved spec, and cannot be *done* without
@@ -264,9 +263,6 @@ actually goes missing. The charters cost nothing until used.
   fill them in. That is the check working, not a failure.
 - A fresh workspace has two warnings — no tasks yet, and no direction sentence
   in `company/roadmap.md`. Both clear once real work starts.
-- The demo product in `examples/` describes a product that lives in another
-  repository, so its `pnpm` verification commands are illustrative. Only
-  `node tooling/src/cli.mjs …` commands run inside the company workspace itself.
 
 ## Roadmap
 
