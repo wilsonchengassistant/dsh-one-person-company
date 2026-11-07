@@ -1,0 +1,20 @@
+{
+  "name": "one-person-company",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Operating system for a one-person company run with a team of AI agents",
+  "bin": {
+    "opc": "./tooling/src/cli.mjs"
+  },
+  "scripts": {
+    "doctor": "node tooling/src/cli.mjs doctor",
+    "board": "node tooling/src/cli.mjs board",
+    "ready": "node tooling/src/cli.mjs board --ready",
+    "budget": "node tooling/src/cli.mjs budget",
+    "roles": "node tooling/src/cli.mjs roles"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

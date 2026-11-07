@@ -1,0 +1,64 @@
+{
+  "name": "dsh-one-person-company",
+  "version": "0.1.0",
+  "description": "Run a software company alone with a team of AI agents: an embedded `one-person-company` skill plus a sidebar task board. Bootstraps a repo-native operating system — ten role charters, spec-as-contract workflow, and an `opc` CLI that assembles the exact prompt for each agent.",
+  "license": "MIT",
+  "type": "module",
+  "author": "wilsonchengassistant",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wilsonchengassistant/dsh-one-person-company.git"
+  },
+  "homepage": "https://github.com/wilsonchengassistant/dsh-one-person-company#readme",
+  "bugs": "https://github.com/wilsonchengassistant/dsh-one-person-company/issues",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "one-person-company",
+    "agents",
+    "spec-driven-development",
+    "task-board",
+    "solo-founder"
+  ],
+  "bin": {
+    "opc": "./bin/opc.js"
+  },
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-slots"
+      ]
+    }
+  },
+  "files": [
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "bootstrap.sh",
+    "bin/opc.js",
+    "cordis.patch.yml",
+    "lib/index.js",
+    "lib/client.js",
+    "skill/SKILL.md",
+    "template/**",
+    "screenshots.json",
+    "screenshots/*.png"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

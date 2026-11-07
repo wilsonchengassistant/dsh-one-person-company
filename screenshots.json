@@ -1,0 +1,18 @@
+{
+  "screenshots": [
+    {
+      "file": "screenshots/board.png",
+      "caption": {
+        "en": "The Company board dialog: summary counts, and every task with its status, owner and dependencies.",
+        "zh": "公司看板：统计数字，以及每个任务的状态、负责人与依赖。"
+      }
+    },
+    {
+      "file": "screenshots/sidebar-button.png",
+      "caption": {
+        "en": "The Company board button in the sidebar footer.",
+        "zh": "侧边栏底部的公司看板按钮。"
+      }
+    }
+  ]
+}
