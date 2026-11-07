@@ -83,7 +83,7 @@ company/
   checklists/              definition of done · review · pre-ship
 tooling/                   the opc CLI — plain ESM, zero dependencies
 docs/architecture/         four Mermaid diagrams: System, Backend, Frontend, Data
-playbook/                  12 documents on how the machine works
+playbook/                  13 documents, including 12-the-full-cycle.md
 ```
 
 ## Screenshots
@@ -162,6 +162,54 @@ true; a generated picture lies quietly.
 
 Also: `new spec · new task · new adr · new research · new incident ·
 new release · roles · init`. `npm link` installs the `opc` shorthand.
+
+## How it works end to end
+
+You do four things; everything else is an agent's job.
+
+| # | You decide | How often |
+|---|---|---|
+| 1 | the **charter** — who hurts, what it costs them, why you win | once |
+| 2 | approve the **spec** — can a test prove each acceptance criterion? | per feature |
+| 3 | the **review verdict** — you looked at the thing and believe it | before it ships |
+| 4 | the **six founder gates** (money, contracts, production data, customers, the charter, the first launch) | when one appears |
+
+The seven stages, and the exact prompt for each, are in
+`playbook/12-the-full-cycle.md`. The short version:
+
+```
+charter → spec → tasks → build → test+review → deploy → operate
+   │         │        │       │         │           │         │
+  you      you      agent  agent   two agents     agent     agent
+ approve  approve                                               │
+                                                       you click it
+```
+
+Ask the CLI where you are:
+
+```sh
+node tooling/src/cli.mjs cycle
+```
+
+```
+Company cycle
+
+  charter               written
+  specs                 1 (1 approved, 0 not)
+  tasks                 20
+    ready               4
+    in progress         0
+    done                0
+
+Stage 4 — build the next task.
+  T-0001: Scaffold monorepo, Postgres schema and migrations  (agent:engineer)
+    node tooling/src/cli.mjs pack T-0001 > /tmp/ctx.md
+  Paste /tmp/ctx.md into a subagent with: "do this task, stay inside the
+  write scope, run the verification command, paste the real output."
+```
+
+That is the whole daily loop: `doctor`, `cycle`, pick a task, `pack` it, review
+what comes back, move the card.
 
 ## What `doctor` actually checks
 

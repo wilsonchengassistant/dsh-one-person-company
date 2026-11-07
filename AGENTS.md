@@ -29,6 +29,7 @@ architecture template still has its four diagrams.
 | `bootstrap.sh` | Copies `template/` into a target and runs `opc init` |
 | `bin/opc.js` | The CLI shim |
 | `scripts/preflight.sh` | The checks above |
+| `scripts/sync-template.sh` | Pull `template/` from its source workspace (`--check` to report drift) |
 
 `template/` is generated from a separate source workspace. After changing
 anything the machine owns, sync it and run preflight — check 8 fails on drift.

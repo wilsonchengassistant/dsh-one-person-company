@@ -63,7 +63,8 @@ section "3. Files the runtime needs"
 for f in package.json cordis.patch.yml bootstrap.sh bin/opc.js \
          lib/index.js lib/client.js skill/SKILL.md \
          template/tooling/src/cli.mjs template/tooling/src/board.mjs \
-         template/playbook/00-the-model.md README.md LICENSE CHANGELOG.md; do
+         template/playbook/00-the-model.md template/playbook/12-the-full-cycle.md \
+         README.md LICENSE CHANGELOG.md AGENTS.md; do
   if [ -f "$f" ]; then ok "$f"; else bad "missing $f"; fi
 done
 
@@ -74,6 +75,7 @@ for f in lib/index.js lib/client.js bin/opc.js template/tooling/src/*.mjs; do
 done
 if bash -n bootstrap.sh >/dev/null 2>&1; then ok "bash -n bootstrap.sh"; else bad "syntax error in bootstrap.sh"; fi
 if bash -n scripts/preflight.sh >/dev/null 2>&1; then ok "bash -n scripts/preflight.sh"; else bad "syntax error in scripts/preflight.sh"; fi
+if bash -n scripts/sync-template.sh >/dev/null 2>&1; then ok "bash -n scripts/sync-template.sh"; else bad "syntax error in scripts/sync-template.sh"; fi
 
 # --------------------------------------------------------------------------
 section "5. Version agrees with the changelog"
@@ -165,6 +167,7 @@ fi
 section "10. The architecture template still has its four diagrams"
 arch="template/tooling/src/templates.mjs"
 count=$(grep -c 'mermaid' "$arch" 2>/dev/null || echo 0)
+if node template/tooling/src/cli.mjs --help 2>/dev/null | grep -q "cycle"; then ok "the CLI has the cycle command"; else bad "the bundled CLI has no cycle command — template/ is stale"; fi
 if [ "$count" -ge 4 ]; then ok "$count mermaid references in the template"; else bad "only $count mermaid references — expected at least 4"; fi
 for section_name in System Backend Frontend Data; do
   if grep -q "^## $section_name" "$arch" 2>/dev/null; then ok "## $section_name"; else bad "the architecture template lost its '## $section_name' section"; fi

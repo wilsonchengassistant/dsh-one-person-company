@@ -25,7 +25,7 @@ import {
   architectureReadme,
 } from './templates.mjs'
 import { ROLES, FOUNDER_GATES } from './roles.mjs'
-import { loadTasks, renderBoard, boardSummary, decorate } from './board.mjs'
+import { loadTasks, renderBoard, boardSummary, decorate, readyTasks } from './board.mjs'
 import { buildContextPack } from './context.mjs'
 import { doctor, renderDoctor } from './doctor.mjs'
 
@@ -482,6 +482,117 @@ function newFile(root, kind, title) {
   console.log(`Created ${path.replace(root + '/', '')}`)
 }
 
+/**
+ * `opc cycle` — where the project actually is, and what the next action is.
+ *
+ * The pipeline has seven stages and the board only knows about tasks, so the
+ * question a founder asks every morning is "what do I do next?". This answers it
+ * from the artefacts on disk rather than from memory.
+ */
+function showCycle(root) {
+  const read1 = (rel) => {
+    const path = join(root, rel)
+    return exists(path) ? read(path) : ''
+  }
+
+  const charter = read1('company/charter.md')
+  const charterFilled = charter !== '' && !/^#\s*Untitled Company/m.test(charter) && !/<!--[\s\S]*?-->/.test(charter.replace(/<!--[\s\S]*?-->\n/g, ''))
+
+  const specsDir = join(root, 'company', 'specs')
+  const specFiles = exists(specsDir)
+    ? listFiles(specsDir, '.md').filter((f) => !/^README/i.test(f))
+    : []
+  const specs = specFiles.map((f) => {
+    const { data } = parseFrontmatter(read(join(specsDir, f)))
+    return { file: `company/specs/${f}`, status: data.status || 'unknown', title: data.title || f }
+  })
+  const approved = specs.filter((s) => s.status === 'approved')
+  const draft = specs.filter((s) => s.status !== 'approved')
+
+  const tasks = decorate(loadTasks(root), root)
+  const ready = readyTasks(tasks)
+  const count = (status) => tasks.filter((t) => t.status === status).length
+
+  const line = (label, value) => `  ${label.padEnd(22)}${value}`
+  const out = []
+  out.push('')
+  out.push('Company cycle')
+  out.push('')
+  out.push(line('charter', charterFilled ? 'written' : 'NOT written'))
+  out.push(line('specs', specs.length === 0 ? 'none' : `${specs.length} (${approved.length} approved, ${draft.length} not)`))
+  out.push(line('tasks', tasks.length === 0 ? 'none' : `${tasks.length}`))
+  if (tasks.length) {
+    out.push(line('  ready', String(ready.length)))
+    out.push(line('  in progress', String(count('in_progress'))))
+    out.push(line('  in review', String(count('review'))))
+    out.push(line('  done', String(count('done'))))
+    out.push(line('  blocked', String(count('blocked'))))
+  }
+  out.push('')
+
+  // The first thing that is not done, in pipeline order.
+  if (!charterFilled) {
+    out.push('Stage 1 — write the charter.')
+    out.push('  Ask an agent:')
+    out.push('    "Use the one-person-company skill. Ask me five questions about who')
+    out.push('     this is for and what it costs them, then write company/charter.md."')
+  } else if (specs.length === 0) {
+    out.push('Stage 2 — write the first spec.')
+    out.push('  Ask an agent:')
+    out.push('    "Read company/charter.md. Write a spec in company/specs/ with')
+    out.push('     5-8 numbered AC-n criteria a test could check. status: draft."')
+  } else if (approved.length === 0) {
+    out.push('Stage 2 — approve a spec.')
+    out.push('  Read it. Each AC-n must be checkable without asking a question.')
+    out.push('  Then: "The acceptance criteria are fine. Set status: approved."')
+    const s0 = draft[0]
+    if (s0) out.push(`  Waiting: ${s0.file}`)
+  } else if (tasks.length === 0) {
+    out.push('Stage 3 — decompose the spec into tasks.')
+    out.push('  Ask an agent:')
+    out.push('    "Read the approved spec. Decompose it with')
+    out.push('     node tooling/src/cli.mjs new task, each with owner, writes and a')
+    out.push('     runnable verification command. doctor must report 0 errors."')
+    out.push(`  Spec: ${approved[approved.length - 1].file}`)
+  } else if (count('review') > 0) {
+    const first = tasks.find((t) => t.status === 'review')
+    out.push('Stage 5 — review what is finished.')
+    out.push(`  ${first.id}: ${first.title}`)
+    out.push('  Hand it to a read-only reviewer: "assume the work is wrong, cite file:line,')
+    out.push('  and check docs/architecture against the change. One word: approve,')
+    out.push('  request changes, or escalate."')
+    out.push(`  Then: node tooling/src/cli.mjs pack ${first.id}`)
+  } else if (ready.length > 0) {
+    const next = ready.find((t) => t.priority === 'P0') || ready.find((t) => t.priority === 'P1') || ready[0]
+    out.push('Stage 4 — build the next task.')
+    out.push(`  ${next.id}: ${next.title}  (${next.owner || 'unowned'})`)
+    out.push(`    node tooling/src/cli.mjs pack ${next.id} > /tmp/ctx.md`)
+    out.push('  Paste /tmp/ctx.md into a subagent with: "do this task, stay inside the')
+    out.push('  write scope, run the verification command, paste the real output."')
+  } else if (count('in_progress') > 0) {
+    out.push('Stage 4 — something is in progress but nothing is startable.')
+    out.push('  Either finish what is in progress, or clear the dependency that blocks the board:')
+    for (const t of tasks.filter((t) => t.status === 'in_progress')) {
+      out.push(`    ${t.id}  ${t.title}  (${t.owner || 'unowned'})`)
+    }
+    out.push('  Check with: node tooling/src/cli.mjs doctor')
+  } else if (count('blocked') > 0) {
+    out.push('Something is blocked. Unblock it, or drop it.')
+    for (const t of tasks.filter((t) => t.status === 'blocked')) {
+      out.push(`  ${t.id}  ${t.title}`)
+    }
+  } else {
+    out.push('Stage 7 — the board is clear.')
+    out.push('  Read company/metrics.md, then write ONE direction sentence into')
+    out.push('  company/roadmap.md. Then delete one thing.')
+  }
+
+  out.push('')
+  out.push('  Full walkthrough: playbook/12-the-full-cycle.md')
+  out.push('')
+  console.log(out.join('\n'))
+}
+
 function showBoard(root, opts) {
   const tasks = decorate(loadTasks(root), root)
   if (opts.json) {
@@ -561,25 +672,29 @@ function showRoles(root) {
 function usage() {
   console.log(`opc — operating system for a one-person company
 
-  opc init                        scaffold the company OS
-  opc new spec "Title"            create a feature spec
-  opc new task "Title"            create a task  (--spec path --owner agent:x --priority P1 --writes "a/**,b/**")
-  opc new adr "Title"             architecture decision record
-  opc new research "Title"        research brief
-  opc new incident "Title"        incident report
-  opc new release v1.2.0          release note
-  opc board [--ready|--json]       the task board
-  opc budget                     the spend ceilings from company/budget.md
+  opc cycle                          where you are, and what to do next
+  opc doctor                         ~30 consistency checks
+  opc board [--ready|--json]         the task board
   opc pack T-0001 [--roles owner,reviewer]
-  opc doctor                      health check
-  opc roles                       list roles and founder gates
+                                     the prompt for one task
+  opc budget                         the spend ceilings
+
+  opc init                           scaffold the company OS
+  opc new spec "Title"               create a feature spec
+  opc new task "Title"               create a task
+                                     (--spec path --owner agent:x --priority P1
+                                      --writes "a/**,b/**" --depends T-0001)
+  opc new adr "Title"                architecture decision record
+  opc new research "Title"           research brief
+  opc new incident "Title"           incident report
+  opc new release v1.2.0             release note
+  opc roles                          list roles and the founder gates
 
 If "opc" is not on your PATH, use the same command as:
   node tooling/src/cli.mjs <command>
 or install the shortcut once with:
-  npm link                        # then "opc" works anywhere`)
+  npm link                           # then "opc" works anywhere`)
 }
-
 try {
   const root = repoRoot()
   switch (cmd) {
@@ -598,6 +713,7 @@ try {
     }
     case 'board': showBoard(root, { ready: flag('ready'), json: flag('json') }); break
     case 'budget': showBudget(root); break
+    case 'cycle': showCycle(root); break
     case 'pack': showPack(root, argv[1], { roles: flag('roles') }); break
     case 'doctor': showDoctor(root); break
     case 'roles': showRoles(root); break

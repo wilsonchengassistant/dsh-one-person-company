@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.0
+
+- **`playbook/12-the-full-cycle.md`, and `opc cycle`.** The plugin shipped the
+  machine but not the walkthrough: the practical, stage-by-stage sequence from an
+  empty folder to a deployed product, with the exact prompt to paste at each
+  step. `opc cycle` now answers "where am I, what do I do next?" from the
+  artefacts on disk — charter written, specs approved, tasks ready / in
+  progress / in review — and prints the next command.
+- The skill gained a "Start here, in order" section, so an agent asked to use it
+  starts at the beginning instead of improvising.
+- `scripts/sync-template.sh`: pull `template/` from its source workspace, with
+  `--check` to report drift only. The template is a copy, and a copy drifts.
+- README: a "How it works end to end" section with the seven stages and a sample
+  `opc cycle` report.
+
 ## 0.5.0
 
 - **The shipped machine is generic.** `template/examples/` is gone: it carried a
