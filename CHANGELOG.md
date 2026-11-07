@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.1
+
+- `scripts/install-local.sh`: install this working copy into a DSH profile and
+  report whether the installed copy actually matches the source. `dsh plugin`
+  installs by hardlink, so editing in place does not update an installed copy —
+  and a change to `lib/client.js` also needs a host restart, because the browser
+  module graph is built at boot. The script checks both and says which one is
+  outstanding.
+
 ## 0.6.0
 
 - **`playbook/12-the-full-cycle.md`, and `opc cycle`.** The plugin shipped the

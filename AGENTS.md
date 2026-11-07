@@ -8,9 +8,16 @@ changing anything; everything below has cost someone an afternoon at least once.
 **A change to this package is not finished until it is committed and pushed.**
 
 ```sh
-bash scripts/preflight.sh     # must print "all checks passed"
+bash scripts/preflight.sh        # must print "all checks passed"
 git push origin main
+bash scripts/install-local.sh    # refresh the copy in the local DSH profile
 ```
+
+Push and install are both required, for different reasons: the push is how anyone
+else gets it, the install is how **you** can test it in a new workspace. `dsh
+plugin` installs by hardlink, so an edited source is invisible until the install
+runs again, and a `lib/client.js` change additionally needs
+`~/.dsh/restart-dsh-web.sh` before the panel appears.
 
 `preflight.sh` asserts the working tree is clean, that `origin/main` equals the
 local `HEAD` (a push can exit 0 while `main` is behind), that the version agrees
@@ -30,6 +37,7 @@ architecture template still has its four diagrams.
 | `bin/opc.js` | The CLI shim |
 | `scripts/preflight.sh` | The checks above |
 | `scripts/sync-template.sh` | Pull `template/` from its source workspace (`--check` to report drift) |
+| `scripts/install-local.sh` | Reinstall into a local profile and warn if the host needs a restart |
 
 `template/` is generated from a separate source workspace. After changing
 anything the machine owns, sync it and run preflight — check 8 fails on drift.

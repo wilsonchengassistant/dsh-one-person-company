@@ -64,7 +64,8 @@ for f in package.json cordis.patch.yml bootstrap.sh bin/opc.js \
          lib/index.js lib/client.js skill/SKILL.md \
          template/tooling/src/cli.mjs template/tooling/src/board.mjs \
          template/playbook/00-the-model.md template/playbook/12-the-full-cycle.md \
-         README.md LICENSE CHANGELOG.md AGENTS.md; do
+         README.md LICENSE CHANGELOG.md AGENTS.md \
+         scripts/preflight.sh scripts/sync-template.sh scripts/install-local.sh; do
   if [ -f "$f" ]; then ok "$f"; else bad "missing $f"; fi
 done
 
@@ -76,6 +77,7 @@ done
 if bash -n bootstrap.sh >/dev/null 2>&1; then ok "bash -n bootstrap.sh"; else bad "syntax error in bootstrap.sh"; fi
 if bash -n scripts/preflight.sh >/dev/null 2>&1; then ok "bash -n scripts/preflight.sh"; else bad "syntax error in scripts/preflight.sh"; fi
 if bash -n scripts/sync-template.sh >/dev/null 2>&1; then ok "bash -n scripts/sync-template.sh"; else bad "syntax error in scripts/sync-template.sh"; fi
+if bash -n scripts/install-local.sh >/dev/null 2>&1; then ok "bash -n scripts/install-local.sh"; else bad "syntax error in scripts/install-local.sh"; fi
 
 # --------------------------------------------------------------------------
 section "5. Version agrees with the changelog"
