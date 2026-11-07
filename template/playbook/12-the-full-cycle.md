@@ -93,8 +93,37 @@ a UI path (`company/design-scope.json`) and which declares no `design:`, or whos
 mockup file does not exist. `opc cycle` then reports *Stage 4 — mock up the
 screens first* instead of handing you a build task.
 
-**Your check:** open the mockup in a browser. Would you understand this screen
-with no explanation? Are all four states there? Is the primary action obvious?
+**Your check:** the mockup is rendered inside the panel, so play with it. Would
+you understand this screen with no explanation? Are all four states there? Is the
+primary action obvious?
+
+Then press **Approve this mockup**, or **Request changes** with a reason.
+
+### When playing with the mockup changes the requirement
+
+It usually does. A mockup is the requirement in another language, and the moment
+you click through it you find out what you actually meant. That is the point of
+making it before the code.
+
+So the loop closes backwards, and the workflow handles both directions:
+
+| What you found | Where it goes |
+|---|---|
+| the copy is wrong, a state is missing, the layout is confused | a **new mockup**: re-run the design step, then approve again |
+| the requirement itself is different | the **spec**: bump `spec_version`, add a change-log row saying what changed and that a mockup review caused it, recompute `approved_hash`, re-approve |
+
+Two mechanical consequences, both enforced by `opc doctor`:
+
+- **An approved spec that was edited afterwards is an error.** Editing it without
+  re-approving it fails the checks, and the cycle reports *Stage 2 — re-approve
+  the spec*, so a requirement cannot drift past its own approval.
+- **A task claiming an acceptance criterion the spec no longer has is an error.**
+  When a revision drops or renumbers `AC-3`, the task that claimed it has to be
+  re-scoped before anything builds on it.
+
+And one more: a mockup approved against spec version 1 is stale once the spec is
+version 2, so it has to be looked at again. That is deliberate — the approval was
+for the requirement you saw, not for whatever the file says now.
 
 ## Stage 5 — task → implementation
 

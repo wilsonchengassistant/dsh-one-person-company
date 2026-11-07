@@ -8,9 +8,9 @@
 
 import { join } from 'node:path'
 import { readdirSync } from 'node:fs'
-import { read, exists, parseFrontmatter } from './util.mjs'
+import { read, exists, parseFrontmatter, hashBody } from './util.mjs'
 import { loadTasks, readyTasks, decorate, findCycles, STATUSES } from './board.mjs'
-import { designScopeOf, mockupState } from './design.mjs'
+import { designScopeOf, mockupState, approvalOf } from './design.mjs'
 
 const CORE_FILES = [
   ['AGENTS.md', 'workspace operating manual'],
@@ -159,6 +159,10 @@ export function doctor(root) {
         errors.push(`${t.id}: writes a UI path but declares no design: — a mockup in design/screens/ must exist first`)
       } else if (mockup === 'missing-file') {
         errors.push(`${t.id}: design ${t.design} does not exist`)
+      } else if (mockup === 'unapproved') {
+        errors.push(
+          `${t.id}: design ${t.design} has not been approved by a human — approve it in Company board before an engineer starts`
+        )
       }
     }
 
@@ -311,6 +315,55 @@ export function doctor(root) {
     if (!section || placeholder || section.trim().length < 40) {
       warnings.push(
         'company/roadmap.md has no direction sentence — the agent team has no steering input this week'
+      )
+    }
+  }
+
+  // --- an approved spec must not have changed since it was approved -------
+  // The mockup review is where a requirement usually changes, so this is the
+  // check that stops "I edited the spec and forgot to re-approve it".
+  for (const [path, spec] of specs) {
+    if (spec.data.status !== 'approved') continue
+    if (!spec.data.approved_hash) {
+      warnings.push(
+        `${path}: has no approved_hash — run the pm role to record it, so a later edit cannot silently invalidate the approval`
+      )
+      continue
+    }
+    if (spec.data.approved_hash !== hashBody(spec.body)) {
+      errors.push(
+        `${path}: changed after approval (hash ${spec.data.approved_hash} → ${hashBody(spec.body)}). Bump spec_version, add a change-log line, and re-approve it.`
+      )
+    }
+  }
+
+  // --- every acceptance criterion a task claims must still exist ----------
+  // A revised spec that drops or renumbers an AC leaves its tasks pointing at
+  // nothing, and the task will be "done" against a requirement nobody holds.
+  for (const t of tasks) {
+    if (!t.specExists || t.status === 'dropped') continue
+    const spec = specs.get(t.spec)
+    if (!spec) continue
+    const { body } = parseFrontmatter(read(t.path))
+    const claimed = [...new Set([...body.matchAll(/AC-(\d+)/g)].map((m) => `AC-${m[1]}`))]
+    const gone = claimed.filter((ac) => !new RegExp(`\\b${ac}\\b`).test(spec.body))
+    if (gone.length) {
+      errors.push(`${t.id}: claims ${gone.join(', ')}, which the spec no longer has — re-scope the task`)
+    }
+  }
+
+  // --- a mockup approved against an older spec version is stale -----------
+  for (const t of tasks) {
+    if (t.status === 'dropped' || !t.design) continue
+    const spec = specs.get(t.spec)
+    if (!spec) continue
+    const approval = approvalOf(root, t.design)
+    if (approval?.approved !== true) continue
+    const version = Number(spec.data.spec_version ?? 1)
+    const approvedVersion = Number(approval.specVersion ?? 0)
+    if (approvedVersion !== 0 && approvedVersion !== version) {
+      errors.push(
+        `${t.id}: ${t.design} was approved against spec version ${approvedVersion}, the spec is now ${version} — review and re-approve the mockup`
       )
     }
   }

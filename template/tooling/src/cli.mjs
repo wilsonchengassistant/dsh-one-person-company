@@ -22,7 +22,7 @@ import {
 import {
   specTemplate, taskTemplate, adrTemplate, researchTemplate,
   incidentTemplate, releaseTemplate, boardTemplate, charterTemplate,
-  architectureReadme, designReadme, designTokens, screenTemplate, designScope,
+  architectureReadme, designReadme, designTokens, screenTemplate, designScope, designApprovals,
 } from './templates.mjs'
 import { ROLES, FOUNDER_GATES } from './roles.mjs'
 import { loadTasks, renderBoard, boardSummary, decorate, readyTasks } from './board.mjs'
@@ -429,6 +429,7 @@ function init(root) {
   put('design/README.md', designReadme)
   put('design/tokens.css', designTokens)
   put('design/screens/_template.html', screenTemplate)
+  put('design/approvals.json', designApprovals)
   put('.agent/checklists/definition-of-done.md', doneChecklist)
   put('.agent/checklists/review.md', reviewChecklist)
   put('.agent/checklists/pre-ship.md', preShipChecklist)

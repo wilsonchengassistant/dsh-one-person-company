@@ -118,14 +118,24 @@ The link between two files has a name:
 - `tasks/T-NNNN-<slug>.md` is the **work ledger**. Its `Verification` block is
   how the reviewer checks that the work happened at all.
 
-## A mockup before an engineer builds a screen
+## A mockup before an engineer builds a screen — and the human approves it
 
-`design/screens/<name>.html` is a static mockup — one file per screen, four states
-(empty, loading, error, success), tokens from `design/tokens.css` only. A task
-that writes a UI path must declare `design: design/screens/<name>.html`; the
-doctor fails it when that file is missing, and the cycle reports Stage 4 (mock the
-screens up first) instead of handing you a build task. The designer's own tasks
+`design/screens/<name>.html` is a single-file interactive prototype: embedded CSS
+tokens, embedded JavaScript, a state switcher for empty / loading / error /
+success, and a working primary action. One file, no build step.
+
+The human approves it in the panel, which records the decision and the
+`spec_version` it was made against in `design/approvals.json`. A UI task an
+engineer owns cannot start until that approval exists; the designer's own tasks
 are exempt.
+
+**A rejected mockup usually means the requirement changed.** That is expected: a
+mockup is the requirement in another language. When it happens, do not start
+building — go back to the spec first: bump `spec_version`, add a change-log row
+saying what changed and that a mockup review caused it, recompute `approved_hash`,
+re-approve, and re-scope any task whose acceptance criteria no longer match. An
+approved spec edited without re-approving is an error, and so is a task claiming an
+AC the spec no longer has.
 
 ## Architecture is an artefact, not a drawing
 

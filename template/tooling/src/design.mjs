@@ -50,12 +50,59 @@ export function touchesUi(writes, uiGlobs) {
 }
 
 /**
+ * The approval record for one mockup, keyed by its path inside `design/`.
+ *
+ * @param {string} root - Project root.
+ * @returns {Record<string, {approved?: boolean, at?: string, by?: string, note?: string}>}
+ */
+export function readApprovals(root) {
+  const path = join(root, 'design', 'approvals.json')
+  if (!exists(path)) return {}
+  try {
+    const parsed = JSON.parse(read(path))
+    if (parsed === null || typeof parsed !== 'object') return {}
+    const out = {}
+    for (const [key, value] of Object.entries(parsed)) {
+      if (key.startsWith('//')) continue
+      if (value !== null && typeof value === 'object') out[key] = value
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * The recorded approval for one mockup, or null.
+ *
+ * @param {string} root - Project root.
+ * @param {string} file - Path such as `design/screens/capture.html`.
+ * @returns {{approved?: boolean, at?: string, by?: string, note?: string, specVersion?: number} | null}
+ */
+export function approvalOf(root, file) {
+  const rel = String(file).replace(/^\.?\/?design\//, '')
+  return readApprovals(root)[rel] ?? null
+}
+
+/**
+ * Is this mockup approved by a human?
+ *
+ * @param {string} root - Project root.
+ * @param {string} file - Path such as `design/screens/capture.html`.
+ * @returns {boolean}
+ */
+export function isApproved(root, file) {
+  const rel = String(file).replace(/^\.?\/?design\//, '')
+  return readApprovals(root)[rel]?.approved === true
+}
+
+/**
  * The mockup state of one task.
  *
  * @param {object} task - A decorated task.
  * @param {string[] | null} uiGlobs - Globs from design-scope.json.
  * @param {string} root - Project root.
- * @returns {'not-ui' | 'ok' | 'missing-field' | 'missing-file'}
+ * @returns {'not-ui' | 'ok' | 'missing-field' | 'missing-file' | 'unapproved'}
  */
 export function mockupState(task, uiGlobs, root) {
   if (uiGlobs === null) return 'not-ui'
@@ -65,6 +112,8 @@ export function mockupState(task, uiGlobs, root) {
   if (!touchesUi(writes, uiGlobs)) return 'not-ui'
   if (!task.design) return 'missing-field'
   if (!exists(join(root, String(task.design)))) return 'missing-file'
+  // A mockup nobody approved is a mockup nobody looked at; the engineer waits.
+  if (!isApproved(root, task.design)) return 'unapproved'
   return 'ok'
 }
 

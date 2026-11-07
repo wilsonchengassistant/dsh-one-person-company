@@ -8,6 +8,13 @@
       }
     },
     {
+      "file": "screenshots/mockup-review.png",
+      "caption": {
+        "en": "The mockup is rendered inside the panel and you can play with it. Approve it, or request changes with a reason.",
+        "zh": "mockup 直接渲染在面板里，可以直接玩。批准它，或写下理由要求修改。"
+      }
+    },
+    {
       "file": "screenshots/next-step.png",
       "caption": {
         "en": "The next step, computed from the artefacts on disk: the stage, what it means, and a button that copies the exact prompt to hand to an agent.",

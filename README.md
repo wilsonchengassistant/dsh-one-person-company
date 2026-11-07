@@ -63,6 +63,7 @@ result is real, and the board tells you what is left.
 | **Copy the prompt for the agent** | puts the exact instruction in your clipboard |
 | **Run the checks** | runs the ~30 consistency checks on the host and lists what it found |
 | **The board** | every task with status, owner, priority and dependencies |
+| **The mockup** | rendered inline when a screen is waiting for your review — play with the states, then approve or request changes |
 | **Bootstrap this workspace** | creates the company OS in a folder that has none |
 
 ### For agents and CI, not for you
@@ -98,7 +99,8 @@ tooling/                   the opc CLI — plain ESM, zero dependencies
 docs/architecture/         four Mermaid diagrams: System, Backend, Frontend, Data
 design/
   tokens.css               the single source of visual values
-  screens/<name>.html      one static mockup per screen, four states
+  screens/<name>.html      one interactive mockup per screen, four states
+  approvals.json           the human's decision on each mockup
 playbook/                  13 documents, including 12-the-full-cycle.md
 ```
 
@@ -146,19 +148,35 @@ Each charter declares four things — **reads**, **writes**, **never**, **done**
 That is what makes a role checkable rather than decorative. The `reviewer` is
 the important one: read-only, told to *assume the work is wrong*.
 
-## A mockup before an engineer builds a screen
+## A mockup before an engineer builds a screen — and you approve it
 
-`design/screens/<name>.html` is a static, dependency-free mockup — one file per
-screen, four states (empty, loading, error, success), tokens only. `design/tokens.css`
-is the single source of visual values.
+`design/screens/<name>.html` is a **single-file interactive prototype**: its own
+CSS (the tokens) and its own JavaScript, with a state switcher for empty /
+loading / error / success and a working primary action. One file, double-click,
+no build step.
 
-A task that writes a UI path must declare `design: design/screens/<name>.html`,
-and `opc doctor` fails it when that file is missing. The designer's own tasks are
-exempt, because they produce the mockups.
+![The mockup rendered inside the panel, with Approve and Request changes](screenshots/mockup-review.png)
 
-That gate exists for one reason: an engineer building a screen from a paragraph of
-prose is building a guess, and the guess is what the customer sees. A mockup that
-has to be a file is a mockup somebody looked at.
+The panel renders it in an iframe, so you play with it where you already are. Then
+**Approve this mockup**, or **Request changes** with a reason. A UI task an
+engineer owns cannot start until its mockup is approved; the designer's own tasks
+are exempt because they produce the mockups.
+
+### When the mockup changes the requirement
+
+It usually does — a mockup is the requirement in another language, and clicking
+through it is how you find out what you actually meant. So the loop closes
+backwards, and all of it is enforced:
+
+| You found | Where it goes | What the checks do |
+|---|---|---|
+| wrong copy, a missing state, a confused layout | a **new mockup** | the approval is cleared; re-approve when it is right |
+| the requirement is different | the **spec** | editing an approved spec without re-approving it is an error; the cycle reports *Stage 2 — re-approve the spec* |
+| a revision dropped `AC-3` | the **tasks** | a task claiming an acceptance criterion the spec no longer has is an error |
+| the spec moved on | the **mockup** | an approval recorded against an older `spec_version` is stale and has to be looked at again |
+
+That is the whole reason the mockup exists: the guess an engineer makes from a
+paragraph of prose is what the customer ends up seeing.
 
 ## The architecture is an artefact, not a drawing
 

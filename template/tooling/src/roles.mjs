@@ -34,11 +34,13 @@ export const ROLES = [
     writes: ['company/specs/**', 'company/tasks/**', 'company/roadmap.md'],
     never: [
       'let a task enter "ready" without an approved spec',
+      'edit an approved spec without bumping spec_version, adding a change-log row, and recomputing approved_hash',
       'accept an acceptance criterion that cannot be objectively checked',
       'decide to spend money or change the charter — those go to the founder',
     ],
     done: [
       'the spec has problem, scope, user stories, AC-n acceptance criteria, non-functional requirements, and a definition of done',
+      'when a change arrives after approval (usually from a mockup review): spec_version bumped, a change-log row saying what changed and why, approved_hash recomputed, and every dependent task re-checked against the new acceptance criteria',
       'the spec has been decomposed into tasks that are each independently verifiable',
       'every task links back to the spec',
     ],
@@ -93,6 +95,7 @@ export const ROLES = [
     writes: ['only the paths named in the task write scope'],
     never: [
       'start work on a task whose spec is not approved',
+      'start a UI task whose mockup a human has not approved',
       'change files outside the declared write scope without asking',
       'claim something works without running the verification command',
       'invent a dependency that does not exist (hallucinated package)',

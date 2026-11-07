@@ -8,9 +8,9 @@
 // sidebar panel, so they can never disagree about what stage you are at.
 
 import { join } from 'node:path'
-import { exists, read, listFiles, parseFrontmatter } from './util.mjs'
+import { exists, read, listFiles, parseFrontmatter, hashBody } from './util.mjs'
 import { loadTasks, decorate, readyTasks } from './board.mjs'
-import { designScopeOf, awaitingDesign } from './design.mjs'
+import { designScopeOf, awaitingDesign, mockupState, approvalOf } from './design.mjs'
 
 /**
  * @param {string} root - Project root (the directory containing `company/`).
@@ -40,6 +40,12 @@ export function computeCycle(root) {
   )
   const approved = specs.filter((s) => s.status === 'approved')
   const unapproved = specs.filter((s) => s.status !== 'approved')
+  // An approved spec whose body no longer matches its approved hash: the
+  // requirement moved, so the approval did not survive the move.
+  const revised = approved.filter((spec) => {
+    const { data, body } = parseFrontmatter(read(join(root, spec.file)))
+    return data.approved_hash && data.approved_hash !== hashBody(body)
+  })
 
   const tasks = decorate(loadTasks(root), root)
   const ready = readyTasks(tasks)
@@ -49,6 +55,12 @@ export function computeCycle(root) {
 
   const uiGlobs = designScopeOf(root)
   const needsDesign = awaitingDesign(tasks, uiGlobs, root)
+  const awaitingApproval = needsDesign.filter((t) => mockupState(t, uiGlobs, root) === 'unapproved')
+  const unbuilt = needsDesign.filter((t) => mockupState(t, uiGlobs, root) !== 'unapproved')
+  // A mockup the human explicitly rejected, with the note they left.
+  const rejected = awaitingApproval
+    .map((t) => ({ task: t, approval: approvalOf(root, t.design) }))
+    .filter((entry) => entry.approval !== null && entry.approval.approved === false)
 
   const facts = {
     charterFilled,
@@ -89,7 +101,16 @@ export function computeCycle(root) {
       prompt:
         'Read company/charter.md and playbook/05-quality.md. Write a spec in company/specs/ with the problem, scope in and out, 5-8 numbered AC-n acceptance criteria that a test could objectively check, and the non-functional requirements. Set status: draft. Do not write any implementation.'
     }
-  } else if (approved.length === 0) {
+  } else if (revised.length > 0) {
+    const first = revised[0]
+    stage = {
+      n: 2,
+      title: 'Re-approve the spec — it changed after approval',
+      detail: `${first.file} was edited after you approved it. A mockup review that changes the requirement is a change like any other: bump spec_version, say what changed and why, then approve it again.`,
+      actor: 'agent',
+      prompt: `The spec ${first.file} changed after it was approved. Do this in order: bump spec_version, add a row to its change log saying what changed and what caused it (a mockup review, a customer, a bug), recompute approved_hash over the body, set status back to approved, then re-check every task that references it — any task claiming an AC that no longer exists must be re-scoped before work continues. Do not change the implementation in this step.`
+    }
+  } else if (unapproved.length > 0 && revised.length === 0 && approved.length === 0) {
     stage = {
       n: 2,
       title: 'Approve a spec',
@@ -107,14 +128,35 @@ export function computeCycle(root) {
       prompt:
         'Read the approved spec. Decompose it into tasks with `node tooling/src/cli.mjs new task`, each with an owner, a writes scope, any depends_on, and a verification command that actually runs. Then run `node tooling/src/cli.mjs doctor` — it must report 0 errors.'
     }
-  } else if (needsDesign.length > 0) {
-    const first = needsDesign[0]
+  } else if (unbuilt.length > 0) {
+    const first = unbuilt[0]
     stage = {
       n: 4,
       title: 'Mock up the screens first',
       detail: `${first.id}: ${first.title} — a UI task with no mockup. The engineer builds the mockup, not a guess.`,
       actor: 'agent',
       prompt: `Take the designer role. For ${first.id} (${first.title}), read the spec and design/tokens.css, then copy design/screens/_template.html to design/screens/<name>.html and build the screen: the real copy, the primary action, and all four states (empty, loading, error, success). Use only tokens — no raw hex, no magic pixel numbers. Do not write application code. Then set design: design/screens/<name>.html on the task.`
+    }
+  } else if (rejected.length > 0) {
+    const first = rejected[0]
+    const note = first.approval?.note ? ` The note you left: "${first.approval.note}".` : ' No note was left.'
+    stage = {
+      n: 4,
+      title: 'The mockup was rejected — decide what changed',
+      detail: `${first.task.id}: ${first.task.design}.${note} Two outcomes, and they are different: a copy or layout fix is a new mockup; a requirement change starts at the spec.`,
+      actor: 'agent',
+      mockup: { file: String(first.task.design), taskId: first.task.id },
+      prompt: `The human rejected the mockup ${first.task.design} for ${first.task.id}.${note} Ask me which kind of change it is, then act: (a) copy, layout or state fix — rebuild the mockup only; (b) the requirement itself changed — amend ${first.task.spec ?? 'the spec'}: bump spec_version, add a change-log row saying what changed and that a mockup review caused it, re-approve it, and re-scope any task whose acceptance criteria no longer match. Do not write application code.`
+    }
+  } else if (awaitingApproval.length > 0) {
+    const first = awaitingApproval[0]
+    stage = {
+      n: 4,
+      title: 'Approve the mockup',
+      detail: `${first.id}: ${first.title} — ${first.design} exists but no human has approved it. Open it, play with the states, then approve it in this panel.`,
+      actor: 'human',
+      mockup: { file: String(first.design), taskId: first.id },
+      prompt: `Open ${first.design} and review it: the real copy, the four states, the primary action, and whether it uses the tokens. Approve it in the Company board panel, or say what has to change before the engineer starts ${first.id}.`
     }
   } else if (byStatus('review').length > 0) {
     const first = byStatus('review')[0]

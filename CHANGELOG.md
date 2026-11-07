@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.9.0
+
+- **A mockup is a single-file interactive prototype.** `design/screens/<name>.html`
+  now embeds its own CSS (the tokens) and its own JavaScript, with a state
+  switcher for empty / loading / error / success and a working primary action.
+  One file, double-click, no build step — so the mockup can be *played with*, not
+  only looked at.
+- **A human approves it.** `design/approvals.json` records the decision, the
+  reason, and the spec version it was made against. The panel renders the mockup
+  in an iframe and offers **Approve this mockup** / **Request changes**; a UI task
+  an engineer owns cannot start until its mockup is approved. The designer's own
+  tasks are exempt.
+- **The change loop.** Playing with a mockup often changes the requirement, so:
+  an approved spec edited afterwards is an error (`approved_hash`), a task claiming
+  an acceptance criterion the spec no longer has is an error, and a mockup approved
+  against an older `spec_version` is stale. The cycle reports *Stage 2 — re-approve
+  the spec* and a Stage 4 variant for a missing, unapproved or rejected mockup,
+  including the reason the human left.
+- Two Remote methods, `design` and `approveDesign`, both resolved by workspace id;
+  a mockup path is refused unless it resolves inside `design/`.
+
 ## 0.8.0
 
 - **A mockup is now a required step before an engineer builds a screen.** The

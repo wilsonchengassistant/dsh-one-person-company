@@ -4,6 +4,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
+import { createHash } from 'node:crypto'
 
 export function repoRoot(start = process.cwd()) {
   let dir = resolve(start)
@@ -137,4 +138,23 @@ export function nextTaskId(tasks) {
     .filter(Boolean)
   const max = nums.length ? Math.max(...nums) : 0
   return `T-${String(max + 1).padStart(4, '0')}`
+}
+
+/**
+ * A stable hash of a document body, used to prove a spec has not changed since a
+ * human approved it. Front matter is excluded so re-approving does not change the
+ * hash, and trailing whitespace is normalised so an editor's newline does not
+ * invalidate an approval.
+ *
+ * @param {string} body - The document without its front matter.
+ * @returns {string} the first 16 hex characters of the sha256.
+ */
+export function hashBody(body) {
+  const normalised = String(body)
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/\s+$/, ''))
+    .join('\n')
+    .trim()
+  return createHash('sha256').update(normalised).digest('hex').slice(0, 16)
 }
