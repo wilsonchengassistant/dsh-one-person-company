@@ -49,7 +49,7 @@ export const ROLES = [
     mandate:
       'Keep the system small enough to run alone and structured enough to grow. Own the interfaces between parts and the record of why each technical decision was made.',
     reads: ['specs', 'the codebase', 'company/decisions/**', 'operational constraints (budget, stack rules)'],
-    writes: ['company/decisions/**', 'company/specs/** (technical notes section)'],
+    writes: ['company/decisions/**', 'company/specs/** (technical notes section)', 'docs/architecture/**'],
     never: [
       'introduce a service, a queue, or a datastore before the scale requires it',
       'make a one-way decision (billing, data model, auth model, contracts) without an ADR and a migration path',
@@ -59,6 +59,8 @@ export const ROLES = [
       'an ADR exists for every decision with a real alternative',
       'the interface between each component is written down and testable',
       'the design states what happens when it is 10x bigger and when it is 10x smaller',
+      'docs/architecture/{system,backend,frontend,data}.mmd match the system as built',
+      'no diagram shows a box, arrow or table that the code does not have, and none is missing',
     ],
   },
   {

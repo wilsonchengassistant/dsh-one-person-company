@@ -167,6 +167,19 @@ The reviewer agent (`reviewer` role) is then reviewing a change that has
 already survived one adversarial pass — so it spends its attention on the
 issues a self-review misses.
 
+## The diagram is a review instrument
+
+`docs/architecture/README.md` exists so a human can answer *"did the system
+change shape?"* in 30 seconds. The reviewer therefore reads it as part of the
+diff, and asks one question:
+
+> Does this change add or remove a box, an arrow, or a table — and is the diagram
+> updated in the same change?
+
+A changed component with an unchanged diagram is a **blocking** finding, not a
+nitpick. It is the only artefact that makes architectural drift visible before
+it is expensive, and drift is exactly what an agent team accelerates.
+
 ## Adversarial verification
 
 The pattern that beats "many agents agreeing": give the agents *opposing*

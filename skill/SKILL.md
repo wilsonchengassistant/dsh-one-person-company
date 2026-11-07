@@ -91,6 +91,15 @@ The link between two files has a name:
 - `tasks/T-NNNN-<slug>.md` is the **work ledger**. Its `Verification` block is
   how the reviewer checks that the work happened at all.
 
+## Architecture is an artefact, not a drawing
+
+`docs/architecture/README.md` holds the four diagrams — **System**, **Backend**,
+**Frontend**, **Data** — as Mermaid blocks. They are required, not optional: a
+task that changes the system's shape updates them in the same change, and the
+reviewer treats an unchanged diagram against a changed component as a blocking
+finding. A diagram that does not match the code is worse than no diagram, so
+they are owned artefacts rather than generated pictures.
+
 ## The rules that make it work
 
 - **The spec is the contract.** No work starts before it is approved. `doctor`

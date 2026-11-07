@@ -82,6 +82,7 @@ company/
   roles/                   the ten role charters
   checklists/              definition of done · review · pre-ship
 tooling/                   the opc CLI — plain ESM, zero dependencies
+docs/architecture/         four Mermaid diagrams: System, Backend, Frontend, Data
 playbook/                  12 documents on how the machine works
 ```
 
@@ -127,6 +128,27 @@ the path stays available for copying if you would rather run it yourself.
 Each charter declares four things — **reads**, **writes**, **never**, **done**.
 That is what makes a role checkable rather than decorative. The `reviewer` is
 the important one: read-only, told to *assume the work is wrong*.
+
+## The architecture is an artefact, not a drawing
+
+`docs/architecture/README.md` holds four Mermaid diagrams — **System** (what
+talks to what), **Backend** (the request path and which module owns each step),
+**Frontend** (screens and the endpoints they call), and **Data** (the tables and
+their joins). They are text, so they diff in git, GitHub renders them, and an
+agent reads the whole file in about 90 lines.
+
+The rule that makes them worth having:
+
+> **A diagram that does not match the code is worse than no diagram.**
+
+So the diagram is not a one-off deliverable. Any task that adds or removes a
+component, a table, a route or a third party updates it in the same change; the
+`reviewer` role treats an unchanged diagram against a changed component as a
+blocking finding.
+
+Why not auto-generate it? Anything derived from code goes stale the moment the
+code changes and nobody notices. An owned artefact with a reviewer gate stays
+true; a generated picture lies quietly.
 
 ## The five commands
 

@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.0
+
+- **Architecture diagrams are now a required artefact.**
+  `docs/architecture/README.md` carries four Mermaid diagrams in one file —
+  *System*, *Backend*, *Frontend*, *Data* — so a human can answer "did the
+  system change shape?" in 30 seconds. Text, not images: they diff in git,
+  GitHub renders them, and an agent reads the whole file in about 90 lines.
+- `opc init` scaffolds the file; `opc doctor` requires it to exist, to hold at
+  least four mermaid diagrams, and to have the four sections.
+- The `architect` role owns `docs/architecture/**` and its definition of done now
+  requires the diagrams to match the system as built.
+- A spec's technical notes must reference `docs/architecture/README.md`, so the
+  reviewer can see which diagram a feature changes; doctor warns when one does
+  not.
+- `playbook/03` gains the architecture stage and `playbook/05` makes an
+  unchanged diagram against a changed component a blocking review finding.
+
 ## 0.3.0
 
 - **The board is now a sidebar panel row**, not a button in the footer. It sits

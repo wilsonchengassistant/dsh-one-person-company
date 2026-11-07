@@ -60,6 +60,34 @@ appears in the ledger and in the CSV export" is.
 **Gate:** `status: approved` in the spec frontmatter, and the ACs must be
 numbered (`AC-1`, `AC-2`, …) so a QA agent can turn each one into a test.
 
+### 2b. Architecture (kept current, not drawn once)
+
+**Role:** `architect`
+**Produces:** `docs/architecture/README.md` — four diagrams, one file: *System*,
+*Backend*, *Frontend*, *Data*.
+
+They are [Mermaid](https://mermaid.js.org) blocks, so they are text: they diff
+in git, GitHub renders them, and an agent reads the whole file in about 90
+lines instead of reading the repository.
+
+The single most useful rule in this whole playbook, for a solo founder:
+
+> **A diagram that does not match the code is worse than no diagram.**
+
+So the diagram is not a one-off deliverable — it is part of every task that
+changes the system's shape. Add a worker, add a table, add a route, add a third
+party: the same task updates the diagram. `opc doctor` requires the file and its
+four sections to exist; the `reviewer` role is the one that checks a change
+against it.
+
+Why it is not auto-generated: anything derived from code goes stale the moment
+the code changes and nobody notices. An owned artefact with a reviewer gate
+stays true; a generated picture lies quietly.
+
+**The 30-second review:** open *System*. Did this change add a box, remove a
+box, or add an arrow? If yes, the diagram changed in the same commit. If it did
+not change and the shape did, the change is not done.
+
 ### 3. Spec → design
 
 **Role:** `designer`

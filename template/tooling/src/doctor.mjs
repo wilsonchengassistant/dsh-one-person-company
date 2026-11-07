@@ -27,6 +27,16 @@ const CORE_FILES = [
   ['.agent/checklists/pre-ship.md', 'pre-ship checklist'],
 ]
 
+/**
+ * The four architecture diagrams. A solo company's most expensive failure mode
+ * is architectural drift nobody noticed, and a diagram is the only artefact a
+ * human can review in 30 seconds to see that the shape changed.
+ */
+const ARCHITECTURE_DOC = 'docs/architecture/README.md'
+
+/** The four questions the document has to answer, as `## <heading>`. */
+const ARCHITECTURE_SECTIONS = ['System', 'Backend', 'Frontend', 'Data']
+
 const CORE_ROLES = [
   'researcher',
   'pm',
@@ -69,6 +79,24 @@ export function doctor(root) {
 
   for (const [path, why] of CORE_FILES) {
     if (!exists(join(root, path))) errors.push(`missing ${path} (${why})`)
+  }
+
+  const architecturePath = join(root, ARCHITECTURE_DOC)
+  if (!exists(architecturePath)) {
+    errors.push(`missing ${ARCHITECTURE_DOC} (architecture diagrams — run node tooling/src/cli.mjs init)`)
+  } else {
+    const architecture = read(architecturePath)
+    const diagrams = (architecture.match(/```mermaid/g) ?? []).length
+    if (diagrams < ARCHITECTURE_SECTIONS.length) {
+      errors.push(
+        `${ARCHITECTURE_DOC}: has ${diagrams} mermaid diagram(s), expected at least ${ARCHITECTURE_SECTIONS.length} (System, Backend, Frontend, Data)`
+      )
+    }
+    for (const section of ARCHITECTURE_SECTIONS) {
+      if (!new RegExp(`^##\\s+${section}\\b`, 'm').test(architecture)) {
+        errors.push(`${ARCHITECTURE_DOC}: missing the "## ${section}" section`)
+      }
+    }
   }
 
   const roleDir = join(root, '.agent', 'roles')
@@ -254,6 +282,15 @@ export function doctor(root) {
     if (!section || placeholder || section.trim().length < 40) {
       warnings.push(
         'company/roadmap.md has no direction sentence — the agent team has no steering input this week'
+      )
+    }
+  }
+
+  // --- specs must point at the architecture -------------------------------
+  for (const [path, spec] of specs) {
+    if (!/docs\/architecture\//.test(spec.body)) {
+      warnings.push(
+        `${path}: technical notes do not reference docs/architecture/ — the reviewer cannot see which diagram this feature changes`
       )
     }
   }

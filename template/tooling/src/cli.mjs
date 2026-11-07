@@ -22,6 +22,7 @@ import {
 import {
   specTemplate, taskTemplate, adrTemplate, researchTemplate,
   incidentTemplate, releaseTemplate, boardTemplate, charterTemplate,
+  architectureReadme,
 } from './templates.mjs'
 import { ROLES, FOUNDER_GATES } from './roles.mjs'
 import { loadTasks, renderBoard, boardSummary, decorate } from './board.mjs'
@@ -416,6 +417,10 @@ function init(root) {
   put('company/tasks/BOARD.md', boardTemplate)
   put('company/playbooks/README.md', playbooksReadme)
   put('company/research/README.md', researchReadme)
+
+  // The architecture diagrams. Four Mermaid files, not images: they diff in
+  // git and render on GitHub, and an agent reads one in about 60 lines.
+  put('docs/architecture/README.md', architectureReadme)
   put('.agent/checklists/definition-of-done.md', doneChecklist)
   put('.agent/checklists/review.md', reviewChecklist)
   put('.agent/checklists/pre-ship.md', preShipChecklist)
