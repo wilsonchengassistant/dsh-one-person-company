@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.1
+
+- `scripts/preflight.sh`: the checks that stop "I pushed" from meaning nothing —
+  clean tree, `origin/main` equal to local `HEAD` (a push can exit 0 while the
+  remote is behind), version agreeing with the changelog, every README image and
+  `screenshots.json` entry present, the bundled `template/` still matching its
+  source workspace, and the architecture template still holding its four
+  diagrams. `--release` adds the npm tarball checks.
+- `AGENTS.md`: the working notes for this package — the release sequence, and the
+  eight traps that each produced a real bug here (npm dropping `.gitignore`,
+  `slots.inject` around `register`, the list-slot `id`, no `createPortal`, the
+  boot-time client graph, pnpm hardlinks, the Mermaid rhombus label, and never
+  trusting a path from the browser).
+
 ## 0.4.0
 
 - **Architecture diagrams are now a required artefact.**
