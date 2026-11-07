@@ -159,12 +159,12 @@ export function doctor(root) {
     if (t.status === 'blocked' && !/blocked on|blocked by|waiting on/i.test(body)) {
       warnings.push(`${t.id}: blocked but does not say what it is blocked on`)
     }
-    if (ACTIVE_STATUSES.includes(t.status) && (!t.writes || !t.writes.length)) {
-      if (t.status === 'in_progress' || t.status === 'review') {
-        errors.push(`${t.id}: status ${t.status} with no declared write scope`)
-      } else {
-        warnings.push(`${t.id}: no declared write scope — declare it before the work starts`)
-      }
+    // The board rule is "a task in _in_progress_ names its write scope" — not
+    // "every task does". A ready or backlog task has not been started, and a
+    // read-only role (the reviewer) never has one, so warning there is noise
+    // that trains the founder to ignore the doctor.
+    if ((t.status === 'in_progress' || t.status === 'review') && (!t.writes || !t.writes.length)) {
+      errors.push(`${t.id}: status ${t.status} with no declared write scope`)
     }
     for (const d of t.deps) {
       if (!tasks.find((x) => x.id === d)) errors.push(`${t.id}: dependency ${d} does not exist`)
