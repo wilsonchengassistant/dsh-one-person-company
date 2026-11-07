@@ -23,8 +23,13 @@ prompt trustworthy.
 
 ## Bootstrap a new workspace
 
-`bootstrap.sh` and `template/` sit next to this skill, in the plugin's base
-directory. The template is reusable; the product state is not.
+**From the GUI:** open **Company board** in the sidebar footer. A workspace with
+no company OS offers a *Bootstrap this workspace* button, which does the same
+thing as the command below. That is the intended path for a user who does not
+want a terminal.
+
+**From the CLI:** `bootstrap.sh` and `template/` sit next to this skill, in the
+plugin's base directory. The template is reusable; the product state is not.
 
 ```sh
 bash bootstrap.sh /path/to/new/workspace

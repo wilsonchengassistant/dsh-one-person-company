@@ -77,10 +77,35 @@ for item in tooling playbook examples; do
   run "cp -R \"\$TEMPLATE/$item\" \"\$TARGET/$item\""
   say "  + $item/"
 done
-for item in package.json .gitignore; do
-  run "cp \"\$TEMPLATE/$item\" \"\$TARGET/$item\""
-  say "  + $item"
-done
+run "cp \"\$TEMPLATE/package.json\" \"\$TARGET/package.json\""
+say "  + package.json"
+
+# `.gitignore` is written here, not copied: npm and pnpm both drop a
+# `.gitignore` from an installed package, so copying it worked from a checkout
+# and failed from node_modules — the only path a user takes.
+if [ ! -f "$TARGET/.gitignore" ]; then
+  if [ "$CHECK" -eq 1 ]; then
+    say "  [check] write .gitignore"
+  else
+    cat > "$TARGET/.gitignore" <<'GITIGNORE'
+node_modules/
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+dist/
+build/
+.next/
+.turbo/
+coverage/
+*.tsbuildinfo
+GITIGNORE
+  fi
+  say "  + .gitignore"
+else
+  say "  = .gitignore (kept)"
+fi
 
 # --- merge the reusable company-level files ------------------------------
 # Written one by one so an existing project's own files are never lost.

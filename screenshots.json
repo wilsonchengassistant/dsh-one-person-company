@@ -10,8 +10,8 @@
     {
       "file": "screenshots/empty-state.png",
       "caption": {
-        "en": "A workspace with no company OS yet: the panel names the folder and gives a copy button, so bootstrapping it is one paste away.",
-        "zh": "尚未建立公司系统的工作区：面板显示资料夹路径并提供复制按钮，执行 bootstrap 只需一次粘贴。"
+        "en": "A workspace with no company OS yet: one click builds it — the tooling, the ten role charters, the playbook and the research briefs, plus an empty charter and task board.",
+        "zh": "尚未建立公司系统的工作区：一键建好 — 工具链、十份角色设定、playbook、研究简报，以及空的 charter 与任务板。"
       }
     },
     {

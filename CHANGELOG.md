@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0
+
+- **Bootstrap from the GUI.** A workspace with no company OS now offers a
+  *Bootstrap this workspace* button instead of telling you to open a terminal.
+  It runs the bundled `bootstrap.sh` on the Host against the workspace path held
+  by the registry — the browser never sends a path, so it cannot write anywhere
+  you have not already added as a workspace. Idempotent: a workspace that
+  already has `company/tasks` reports `already` and nothing runs.
+- `bootstrap.sh` writes `.gitignore` itself instead of copying it. npm and pnpm
+  both drop a `.gitignore` from an installed package, so the copy worked from a
+  checkout and failed from `node_modules` — the only path a user takes.
+
 ## 0.1.0
 
 - First release.

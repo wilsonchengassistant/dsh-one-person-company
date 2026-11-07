@@ -38,7 +38,18 @@ Restart the host and refresh the page. Two things appear:
    *"use the one-person-company skill to start a project here"*.
 2. **A "Company board" button** in the sidebar footer.
 
-## Quick start
+## Quick start — entirely inside the GUI
+
+1. Add a workspace in DSH as you normally would. An empty folder is fine.
+2. Open **Company board** in the sidebar footer.
+3. It reports *this workspace has no company OS yet* and offers **Bootstrap this
+   workspace**. Click it.
+4. The board appears. Ask an agent to write the charter and the first spec.
+
+No terminal, no commands. The button runs the bundled `bootstrap.sh` on the host,
+against the path the workspace registry already holds.
+
+### Or from a terminal, if you prefer
 
 ```sh
 opc bootstrap ~/Projects/my-company        # or: bash bootstrap.sh ~/Projects/my-company
@@ -51,8 +62,6 @@ node tooling/src/cli.mjs new task "First slice" \
 node tooling/src/cli.mjs doctor            # ~30 consistency checks
 node tooling/src/cli.mjs board --ready
 ```
-
-Then open **Company board** in the sidebar and watch it fill up.
 
 ## What you get
 
@@ -86,10 +95,11 @@ whose spec is approved; `waits 3` marks the ones that are not.
 
 ### Not a company workspace yet
 
-![The empty state, offering the bootstrap hint and a copy button](screenshots/empty-state.png)
+![The empty state, offering the Bootstrap this workspace button](screenshots/empty-state.png)
 
-A workspace with no `company/` folder is not an error — the panel offers the
-path and a copy button so bootstrapping it is one paste away.
+A workspace with no `company/` folder is not an error — it is the one click
+between you and a working company OS. The button runs the bootstrap on the host;
+the path stays available for copying if you would rather run it yourself.
 
 ### The button
 
@@ -166,6 +176,9 @@ that lives only in a prompt is context, not a control.
   `sidebar.footer.action` list slot and renders the board in a dialog. A refused
   seat degrades to a warning instead of failing the client entry, because a
   throw there takes the whole GUI down with it.
+- **Bootstrap runs on the host, by workspace id.** The client never sends a
+  path, so the button can only write into a folder already registered as a
+  workspace. It refuses a workspace that already has `company/tasks`.
 - **Paths are shown with `~` collapsed**, so the dialog can be screenshotted or
   screen-shared without carrying a user name around.
 
@@ -238,8 +251,10 @@ actually goes missing. The charters cost nothing until used.
 
 ## Roadmap
 
+- [x] Bootstrap a workspace from the GUI (0.2.0)
 - [ ] `doctor --json` for CI
 - [ ] A task detail view in the panel (read a task body without a terminal)
+- [ ] Run `doctor` from the panel and show a health badge
 - [ ] `sync-template.sh` to keep an installed workspace's machine current
 - [ ] Optional `reviewer` seat on a separate model, so the adversary is never
       the same model that wrote the work
