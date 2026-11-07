@@ -16,3 +16,10 @@
   with summary counts, per-task status, owner, dependencies and readiness, and
   a workspace switcher. Backed by a Typert Remote service (`opcBoard`) that
   reads `company/tasks/*.md` with the same parser the CLI uses.
+
+- The dialog shows workspace paths with the home directory collapsed to `~`, so
+  it can be screenshotted or screen-shared without carrying a user name.
+- `doctor` requires a write scope only once a task is `in_progress` or `review`.
+  Requiring one on a `ready` task warned about read-only work (the reviewer's)
+  and about a founder task that writes nothing, which trained the reader to
+  ignore the doctor.
