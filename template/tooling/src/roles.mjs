@@ -69,15 +69,18 @@ export const ROLES = [
     mandate:
       'Decide how the product feels and looks, and make that decision reusable through a design system instead of a pile of one-off screens.',
     reads: ['specs', 'user research', 'existing design system and components', 'analytics or feedback'],
-    writes: ['design/**', 'design tokens', 'copy in the product', 'the design section of specs'],
+    writes: ['design/**', 'design/tokens.css', 'design/screens/**', 'copy in the product', 'the design section of specs'],
     never: [
       'design screens the spec does not ask for',
       'introduce a new colour, type scale, or spacing rule outside the token set',
       'ship a flow without its empty, loading, and error states',
     ],
     done: [
-      'every screen is built from shared components, not one-off markup',
-      'empty, loading, error, and success states exist',
+      'every screen the spec names has its own file in design/screens/, and the task names it in design:',
+      'each mockup shows empty, loading, error and success — not just the happy path',
+      'each mockup uses design/tokens.css: no raw hex, no magic pixel numbers',
+      'the primary action is visible, and the mockup shows what happens after it',
+      'every screen is assembled from shared components, not one-off markup',
       'accessibility basics hold: contrast, focus order, keyboard path, labels',
     ],
   },

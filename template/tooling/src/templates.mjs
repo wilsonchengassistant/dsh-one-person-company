@@ -76,6 +76,7 @@ priority: P2              # P0 | P1 | P2 | P3
 spec:                     # link to company/specs/<slug>.md
 depends_on: []
 writes: []                # advisory write scopes for this task
+design:                   # UI tasks only: design/screens/<name>.html
 qa_signoff:               # who signed off the acceptance criteria
 created: ${new Date().toISOString().slice(0, 10)}
 updated: ${new Date().toISOString().slice(0, 10)}
@@ -475,4 +476,214 @@ erDiagram
 What this shape enforces: every table has an owner column and row-level
 security filters on it; money is integer minor units plus a currency, never a
 float; anything a customer can lose has an audit table.
+`
+
+// ---------------------------------------------------------------------------
+// The design artefacts.
+//
+// The mockup is a required step, not a nicety: an engineer building a screen
+// from a paragraph of prose guesses, and the guess is what the customer sees.
+// `design/screens/<name>.html` is a static, dependency-free mockup — text, so it
+// diffs, and it opens in a browser, so the founder can actually look at it
+// before a line of product code exists.
+// ---------------------------------------------------------------------------
+
+export const designScope = `{
+  "//": "Any task whose writes match one of these globs needs a mockup before an engineer starts.",
+  "ui": [
+    "apps/web/**",
+    "apps/mobile/**",
+    "packages/ui/**"
+  ]
+}
+`
+
+export const designReadme = `# Design
+
+Mockups live here, one file per screen. They are **static HTML** with no build
+step and no framework: open one in a browser and you are looking at the product
+as it is meant to be, before any application code exists.
+
+| Path | What it is |
+|---|---|
+| \`design/tokens.css\` | the token set — colour, type scale, spacing, radius, motion |
+| \`design/screens/_template.html\` | the mockup skeleton to copy |
+| \`design/screens/<name>.html\` | one screen, static and self-contained |
+
+## The rule
+
+**No engineer starts a UI task until its mockup exists and has been approved.**
+
+A task that touches a UI path declares which mockup it builds:
+
+\`\`\`yaml
+design: design/screens/ledger.html
+\`\`\`
+
+\`opc doctor\` fails a UI task with no \`design:\`, or one pointing at a file that
+does not exist. That is the whole enforcement: the gate is a file that has to be
+there, not a promise in a prompt.
+
+## What a mockup has to contain
+
+1. **The real content**, not Lorem ipsum — use the words the spec uses.
+2. **All four states**: empty, loading, error, success. A screen that only shows
+   the happy path is a screen that will ship without the other three.
+3. **The tokens**, not ad-hoc values: no raw hex, no magic pixel numbers. If a
+   value is missing, add it to \`tokens.css\` first.
+4. **The primary action** visible, and what happens after it.
+
+## From mockup to implementation
+
+The engineer builds the mockup, not a reinterpretation of it. If the mockup turns
+out to be wrong once the real data arrives, the **mockup** is updated first, then
+the code — otherwise the next task builds on a picture nobody has agreed to.
+
+## Reviewing a mockup
+
+Open it in a browser. Ask: would I understand this screen with no explanation?
+Is every state here? Is the primary action obvious? If the answer needs a
+sentence of apology, the mockup is not done.
+`
+
+export const designTokens = `/* The single source of truth for visual values.
+ *
+ * The designer adds to this file; the engineer consumes it. No raw hex, no magic
+ * pixel numbers anywhere else in design/ or in the product — a value that is not
+ * here does not exist yet.
+ */
+
+:root {
+  /* colour — name by role, never by hue */
+  --color-bg: #ffffff;
+  --color-surface: #f7f7f8;
+  --color-border: #e3e3e6;
+  --color-text: #18181b;
+  --color-text-muted: #6b6b74;
+  --color-primary: #2563eb;
+  --color-primary-contrast: #ffffff;
+  --color-success: #16a34a;
+  --color-warning: #b45309;
+  --color-danger: #dc2626;
+
+  /* type — a scale, not a pile of sizes */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --text-xs: 11px;
+  --text-sm: 12.5px;
+  --text-base: 14px;
+  --text-lg: 17px;
+  --text-xl: 22px;
+  --leading-tight: 1.25;
+  --leading-normal: 1.55;
+
+  /* space — a 4px rhythm */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* shape and motion */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.08);
+  --duration-fast: 120ms;
+}
+
+/* Accessibility floor, applied everywhere rather than remembered per screen. */
+* { box-sizing: border-box; }
+:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+`
+
+export const screenTemplate = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screen — <name></title>
+<!-- One screen, one file, no build step. Copy this to design/screens/<name>.html
+     and replace the content. Open it in a browser to review. -->
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  body { margin: 0; background: var(--color-bg); color: var(--color-text);
+         font-family: var(--font-sans); font-size: var(--text-base);
+         line-height: var(--leading-normal); }
+  .frame { max-width: 960px; margin: 0 auto; padding: var(--space-8) var(--space-6); }
+  .screen-name { font-family: var(--font-mono); font-size: var(--text-xs);
+                 color: var(--color-text-muted); text-transform: uppercase;
+                 letter-spacing: 0.06em; }
+  h1 { font-size: var(--text-xl); line-height: var(--leading-tight);
+       margin: var(--space-2) 0 var(--space-6); }
+  .card { background: var(--color-surface); border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg); padding: var(--space-6); }
+  .row { display: flex; gap: var(--space-3); align-items: center; }
+  .btn { padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid transparent;
+         background: var(--color-primary); color: var(--color-primary-contrast);
+         font-size: var(--text-sm); cursor: pointer; }
+  .btn.secondary { background: transparent; color: var(--color-text);
+                   border-color: var(--color-border); }
+  .muted { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .state { margin-top: var(--space-6); padding-top: var(--space-4);
+           border-top: 1px dashed var(--color-border); }
+  .state h2 { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.06em;
+              color: var(--color-text-muted); margin: 0 0 var(--space-2); }
+  .skeleton { height: 12px; border-radius: var(--radius-sm); background: var(--color-border);
+              margin-bottom: var(--space-2); }
+  .alert { border-left: 3px solid var(--color-danger); padding-left: var(--space-3);
+           color: var(--color-danger); font-size: var(--text-sm); }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="screen-name">Screen · <name></div>
+  <h1><what this screen is for, in the words the spec uses></h1>
+
+  <!-- SUCCESS — the real content with real copy, not lorem ipsum -->
+  <section class="card">
+    <div class="row">
+      <strong><the primary thing on this screen></strong>
+    </div>
+    <p class="muted"><supporting line: what happens here, and what it costs></p>
+    <div class="row">
+      <button class="btn"><primary action></button>
+      <button class="btn secondary"><secondary action></button>
+    </div>
+  </section>
+
+  <!-- The other three states are not optional. A screen with only a happy path
+       ships without the three states customers actually hit. -->
+  <section class="state">
+    <h2>Empty — the first visit</h2>
+    <div class="card">
+      <p class="muted"><what the user sees before they have done anything></p>
+      <button class="btn"><the action that ends the empty state></button>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>Loading</h2>
+    <div class="card">
+      <div class="skeleton" style="width: 60%"></div>
+      <div class="skeleton" style="width: 40%"></div>
+      <div class="skeleton" style="width: 80%"></div>
+    </div>
+  </section>
+
+  <section class="state">
+    <h2>Error</h2>
+    <div class="card">
+      <div class="alert"><what went wrong, and what the user can do about it></div>
+      <button class="btn secondary">Try again</button>
+    </div>
+  </section>
+</div>
+</body>
+</html>
 `

@@ -73,7 +73,30 @@ node tooling/src/cli.mjs board --ready   # only what can start now
 
 A task appears only when its dependencies are done *and* its spec is approved.
 
-## Stage 4 — task → implementation
+## Stage 4 — spec → mockup (UI work only)
+
+An engineer building a screen from a paragraph of prose is building a guess, and
+the guess is what the customer sees. So the mockup is a required artefact, and it
+is a **file**, not a description.
+
+Ask an agent:
+
+> Take the designer role. For T-0004, read the spec and `design/tokens.css`, copy
+> `design/screens/_template.html` to `design/screens/capture.html`, and build the
+> screen: the real copy from the spec, the primary action, and all four states —
+> empty, loading, error, success. Use only tokens: no raw hex, no magic pixel
+> numbers. Do not write application code. Then set `design:
+> design/screens/capture.html` on the task.
+
+**The gate is mechanical.** `opc doctor` fails any task whose write scope touches
+a UI path (`company/design-scope.json`) and which declares no `design:`, or whose
+mockup file does not exist. `opc cycle` then reports *Stage 4 — mock up the
+screens first* instead of handing you a build task.
+
+**Your check:** open the mockup in a browser. Would you understand this screen
+with no explanation? Are all four states there? Is the primary action obvious?
+
+## Stage 5 — task → implementation
 
 ```sh
 node tooling/src/cli.mjs pack T-0001 > /tmp/ctx.md
@@ -90,7 +113,7 @@ fresh coding session:
 **Do not paste the whole conversation into the agent.** The pack is the context;
 that is the point of it.
 
-## Stage 5 — implementation → passed
+## Stage 6 — implementation → passed
 
 Two different agents, never the same one that wrote it.
 
@@ -111,7 +134,7 @@ Two different agents, never the same one that wrote it.
 Passed → set the task's `status: done`. **Editing the file is how you move the
 card.** There is no other tracker.
 
-## Stage 6 — deploy
+## Stage 7 — deploy and operate
 
 > Take the devops role. Build the CI job, the preview environment and the
 > rollback. Actually execute the rollback once and paste the output.
@@ -119,7 +142,7 @@ card.** There is no other tracker.
 **Your gate:** open the preview URL and use the thing yourself. If you did not
 click it, it is not deployed.
 
-## Stage 7 — operate → learn
+### Operate → learn
 
 Three schedules cover the loop (`playbook/11` has the exact `schedule_create`
 calls): a daily `doctor` + `board` report, a daily support-inbox triage that

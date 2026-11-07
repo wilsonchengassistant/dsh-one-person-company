@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.8.0
+
+- **A mockup is now a required step before an engineer builds a screen.** The
+  designer role existed and the playbook described a design stage, but nothing
+  enforced it: there was no artefact, no directory and no check, so an engineer
+  could build a screen from a paragraph of prose — and the guess is what the
+  customer sees.
+- `design/screens/<name>.html`: one static, dependency-free mockup per screen,
+  with empty / loading / error / success. `design/tokens.css` is the single
+  source of visual values. `company/design-scope.json` lists the UI globs.
+- The task frontmatter gains `design:`, and a UI task without it is an error.
+  `opc doctor` fails a task whose write scope touches a UI path and which names
+  no mockup file that exists. The designer's own tasks are exempt.
+- `opc cycle` gains **Stage 4 — Mock up the screens first**, with the prompt that
+  asks for the mockup; the later stages renumber.
+- The cycle stage computation moved into `tooling/src/cycle.mjs` and the design
+  rules into `tooling/src/design.mjs`, so the CLI, the panel and the doctor share
+  one implementation.
+
 ## 0.7.0
 
 - **The panel is the operator's console.** The board page now opens with the

@@ -88,7 +88,22 @@ stays true; a generated picture lies quietly.
 box, or add an arrow? If yes, the diagram changed in the same commit. If it did
 not change and the shape did, the change is not done.
 
-### 3. Spec → design
+### 3. Spec → mockup (the gate)
+
+**Role:** `designer`
+**Produces:** `design/screens/<name>.html` — one static mockup per screen, plus
+`design/tokens.css`.
+
+A mockup is a **file**, not a description. `opc doctor` fails any task whose write
+scope touches a UI path and which declares no `design:`, so an engineer cannot
+start a screen that nobody has drawn. That is the point: the guess an engineer
+makes from prose is what the customer ends up seeing.
+
+The four states are part of the artefact — empty, loading, error, success. A
+mockup with only the happy path is a screen that will ship without the three
+states customers actually hit.
+
+### 3b. Design system
 
 **Role:** `designer`
 **Produces:** design tokens, components, flows, and the design section of the spec.

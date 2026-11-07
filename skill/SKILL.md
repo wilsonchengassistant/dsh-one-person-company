@@ -118,6 +118,15 @@ The link between two files has a name:
 - `tasks/T-NNNN-<slug>.md` is the **work ledger**. Its `Verification` block is
   how the reviewer checks that the work happened at all.
 
+## A mockup before an engineer builds a screen
+
+`design/screens/<name>.html` is a static mockup — one file per screen, four states
+(empty, loading, error, success), tokens from `design/tokens.css` only. A task
+that writes a UI path must declare `design: design/screens/<name>.html`; the
+doctor fails it when that file is missing, and the cycle reports Stage 4 (mock the
+screens up first) instead of handing you a build task. The designer's own tasks
+are exempt.
+
 ## Architecture is an artefact, not a drawing
 
 `docs/architecture/README.md` holds the four diagrams — **System**, **Backend**,

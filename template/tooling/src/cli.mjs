@@ -22,7 +22,7 @@ import {
 import {
   specTemplate, taskTemplate, adrTemplate, researchTemplate,
   incidentTemplate, releaseTemplate, boardTemplate, charterTemplate,
-  architectureReadme,
+  architectureReadme, designReadme, designTokens, screenTemplate, designScope,
 } from './templates.mjs'
 import { ROLES, FOUNDER_GATES } from './roles.mjs'
 import { loadTasks, renderBoard, boardSummary, decorate, readyTasks } from './board.mjs'
@@ -422,6 +422,13 @@ function init(root) {
   // The architecture diagrams. Four Mermaid files, not images: they diff in
   // git and render on GitHub, and an agent reads one in about 60 lines.
   put('docs/architecture/README.md', architectureReadme)
+
+  // The design artefacts. A mockup that has to be a file is a mockup that
+  // exists; a mockup described in prose is a mockup nobody looked at.
+  put('company/design-scope.json', designScope)
+  put('design/README.md', designReadme)
+  put('design/tokens.css', designTokens)
+  put('design/screens/_template.html', screenTemplate)
   put('.agent/checklists/definition-of-done.md', doneChecklist)
   put('.agent/checklists/review.md', reviewChecklist)
   put('.agent/checklists/pre-ship.md', preShipChecklist)

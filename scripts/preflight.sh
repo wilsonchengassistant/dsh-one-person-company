@@ -63,6 +63,7 @@ section "3. Files the runtime needs"
 for f in package.json cordis.patch.yml bootstrap.sh bin/opc.js \
          lib/index.js lib/client.js skill/SKILL.md \
          template/tooling/src/cli.mjs template/tooling/src/board.mjs \
+         template/tooling/src/cycle.mjs template/tooling/src/design.mjs \
          template/playbook/00-the-model.md template/playbook/12-the-full-cycle.md \
          README.md LICENSE CHANGELOG.md AGENTS.md \
          scripts/preflight.sh scripts/sync-template.sh scripts/install-local.sh; do

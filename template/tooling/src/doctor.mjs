@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import { readdirSync } from 'node:fs'
 import { read, exists, parseFrontmatter } from './util.mjs'
 import { loadTasks, readyTasks, decorate, findCycles, STATUSES } from './board.mjs'
+import { designScopeOf, mockupState } from './design.mjs'
 
 const CORE_FILES = [
   ['AGENTS.md', 'workspace operating manual'],
@@ -36,6 +37,13 @@ const ARCHITECTURE_DOC = 'docs/architecture/README.md'
 
 /** The four questions the document has to answer, as `## <heading>`. */
 const ARCHITECTURE_SECTIONS = ['System', 'Backend', 'Frontend', 'Data']
+
+/**
+ * The design artefacts. A UI task without a mockup is an engineer guessing what
+ * the customer will see, so the gate is a file that has to be there rather than
+ * a promise in a prompt.
+ */
+const DESIGN_FILES = ['design/README.md', 'design/tokens.css']
 
 const CORE_ROLES = [
   'researcher',
@@ -79,6 +87,16 @@ export function doctor(root) {
 
   for (const [path, why] of CORE_FILES) {
     if (!exists(join(root, path))) errors.push(`missing ${path} (${why})`)
+  }
+
+  for (const path of DESIGN_FILES) {
+    if (!exists(join(root, path))) {
+      errors.push(`missing ${path} (design artefact — run node tooling/src/cli.mjs init)`)
+    }
+  }
+  const uiGlobs = designScopeOf(root)
+  if (uiGlobs === null) {
+    errors.push('missing or unreadable company/design-scope.json — it lists the paths that need a mockup')
   }
 
   const architecturePath = join(root, ARCHITECTURE_DOC)
@@ -131,6 +149,17 @@ export function doctor(root) {
       errors.push(
         `${t.id}: status "${t.status}" is not one of ${STATUSES.join(', ')} — the task is invisible to the board`
       )
+    }
+
+    // The mockup gate: a task that writes a UI path must name a mockup that
+    // exists. An engineer building a screen from prose is building a guess.
+    if (t.status !== 'dropped') {
+      const mockup = mockupState(t, uiGlobs, root)
+      if (mockup === 'missing-field') {
+        errors.push(`${t.id}: writes a UI path but declares no design: — a mockup in design/screens/ must exist first`)
+      } else if (mockup === 'missing-file') {
+        errors.push(`${t.id}: design ${t.design} does not exist`)
+      }
     }
 
     if (!t.owner) {

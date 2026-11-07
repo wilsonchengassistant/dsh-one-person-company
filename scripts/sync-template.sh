@@ -37,20 +37,13 @@ SOURCE="$(cd "$SOURCE" && pwd)"
 # a user's charter, spec, tasks, ADRs, metrics, budget, roadmap and runbooks are
 # that user's, never the plugin's.
 FILES=(
-  tooling/src/board.mjs
-  tooling/src/cli.mjs
-  tooling/src/context.mjs
-  tooling/src/cycle.mjs
-  tooling/src/doctor.mjs
-  tooling/src/roles.mjs
-  tooling/src/templates.mjs
-  tooling/src/util.mjs
   package.json
   .gitignore
   company/AGENTS.md
 )
 
 DIRS=(
+  tooling/src
   playbook
   company/research
 )
@@ -82,6 +75,8 @@ for d in "${DIRS[@]}"; do
   if [ -d "$SOURCE/$d" ]; then
     for f in "$SOURCE/$d"/*; do
       [ -f "$f" ] || continue
+      # tooling/src holds only modules; everything else is documentation.
+      if [ "$d" = "tooling/src" ] && [ "${f##*.}" != "mjs" ]; then continue; fi
       copy "$d/$(basename "$f")"
     done
   else

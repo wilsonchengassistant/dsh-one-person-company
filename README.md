@@ -96,6 +96,9 @@ company/
   checklists/              definition of done · review · pre-ship
 tooling/                   the opc CLI — plain ESM, zero dependencies
 docs/architecture/         four Mermaid diagrams: System, Backend, Frontend, Data
+design/
+  tokens.css               the single source of visual values
+  screens/<name>.html      one static mockup per screen, four states
 playbook/                  13 documents, including 12-the-full-cycle.md
 ```
 
@@ -142,6 +145,20 @@ the path stays available for copying if you would rather run it yourself.
 Each charter declares four things — **reads**, **writes**, **never**, **done**.
 That is what makes a role checkable rather than decorative. The `reviewer` is
 the important one: read-only, told to *assume the work is wrong*.
+
+## A mockup before an engineer builds a screen
+
+`design/screens/<name>.html` is a static, dependency-free mockup — one file per
+screen, four states (empty, loading, error, success), tokens only. `design/tokens.css`
+is the single source of visual values.
+
+A task that writes a UI path must declare `design: design/screens/<name>.html`,
+and `opc doctor` fails it when that file is missing. The designer's own tasks are
+exempt, because they produce the mockups.
+
+That gate exists for one reason: an engineer building a screen from a paragraph of
+prose is building a guess, and the guess is what the customer sees. A mockup that
+has to be a file is a mockup somebody looked at.
 
 ## The architecture is an artefact, not a drawing
 

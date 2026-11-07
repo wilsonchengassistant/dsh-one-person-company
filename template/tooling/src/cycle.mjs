@@ -10,6 +10,7 @@
 import { join } from 'node:path'
 import { exists, read, listFiles, parseFrontmatter } from './util.mjs'
 import { loadTasks, decorate, readyTasks } from './board.mjs'
+import { designScopeOf, awaitingDesign } from './design.mjs'
 
 /**
  * @param {string} root - Project root (the directory containing `company/`).
@@ -46,6 +47,9 @@ export function computeCycle(root) {
   const nextTask =
     ready.find((t) => t.priority === 'P0') || ready.find((t) => t.priority === 'P1') || ready[0] || null
 
+  const uiGlobs = designScopeOf(root)
+  const needsDesign = awaitingDesign(tasks, uiGlobs, root)
+
   const facts = {
     charterFilled,
     specs: { total: specs.length, approved: approved.length, unapproved: unapproved.length },
@@ -57,6 +61,7 @@ export function computeCycle(root) {
       done: byStatus('done').length,
       blocked: byStatus('blocked').length
     },
+    needsDesign: needsDesign.map((t) => t.id),
     nextTask: nextTask
       ? { id: nextTask.id, title: nextTask.title, owner: nextTask.owner || '', priority: nextTask.priority }
       : null
@@ -102,10 +107,19 @@ export function computeCycle(root) {
       prompt:
         'Read the approved spec. Decompose it into tasks with `node tooling/src/cli.mjs new task`, each with an owner, a writes scope, any depends_on, and a verification command that actually runs. Then run `node tooling/src/cli.mjs doctor` — it must report 0 errors.'
     }
+  } else if (needsDesign.length > 0) {
+    const first = needsDesign[0]
+    stage = {
+      n: 4,
+      title: 'Mock up the screens first',
+      detail: `${first.id}: ${first.title} — a UI task with no mockup. The engineer builds the mockup, not a guess.`,
+      actor: 'agent',
+      prompt: `Take the designer role. For ${first.id} (${first.title}), read the spec and design/tokens.css, then copy design/screens/_template.html to design/screens/<name>.html and build the screen: the real copy, the primary action, and all four states (empty, loading, error, success). Use only tokens — no raw hex, no magic pixel numbers. Do not write application code. Then set design: design/screens/<name>.html on the task.`
+    }
   } else if (byStatus('review').length > 0) {
     const first = byStatus('review')[0]
     stage = {
-      n: 5,
+      n: 6,
       title: 'Review what is finished',
       detail: `${first.id}: ${first.title}`,
       actor: 'agent',
@@ -113,7 +127,7 @@ export function computeCycle(root) {
     }
   } else if (ready.length > 0) {
     stage = {
-      n: 4,
+      n: 5,
       title: 'Build the next task',
       detail: `${nextTask.id}: ${nextTask.title}`,
       actor: 'agent',
@@ -122,7 +136,7 @@ export function computeCycle(root) {
   } else if (byStatus('in_progress').length > 0) {
     const first = byStatus('in_progress')[0]
     stage = {
-      n: 4,
+      n: 5,
       title: 'Nothing is startable, and something is in progress',
       detail: `${first.id}: ${first.title}. Finish it, or clear the dependency that blocks the board.`,
       actor: 'agent',
@@ -131,7 +145,7 @@ export function computeCycle(root) {
   } else if (byStatus('blocked').length > 0) {
     const first = byStatus('blocked')[0]
     stage = {
-      n: 4,
+      n: 5,
       title: 'Something is blocked',
       detail: `${first.id}: ${first.title}. Unblock it, or drop it.`,
       actor: 'human',
@@ -140,8 +154,8 @@ export function computeCycle(root) {
   } else {
     stage = {
       n: 7,
-      title: 'The board is clear',
-      detail: 'Read the metrics, write ONE direction sentence into company/roadmap.md, then delete one thing.',
+      title: 'Ship, then operate',
+      detail: 'Nothing is left to build. Deploy what is done, then read the metrics, write ONE direction sentence into company/roadmap.md, and delete one thing.',
       actor: 'human',
       prompt:
         'Read company/metrics.md and summarise what changed this week. Then ask me for one direction sentence to write into company/roadmap.md.'
