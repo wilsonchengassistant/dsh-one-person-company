@@ -86,7 +86,7 @@ priority: P2              # P0 | P1 | P2 | P3
 spec:                     # link to company/specs/<slug>.md
 depends_on: []
 writes: []                # advisory write scopes for this task
-design:                   # UI tasks only: design/screens/<name>.html
+design:                   # UI tasks: design/screens/<name>.html, or none if there is no screen
 qa_signoff:               # who signed off the acceptance criteria
 created: ${new Date().toISOString().slice(0, 10)}
 updated: ${new Date().toISOString().slice(0, 10)}

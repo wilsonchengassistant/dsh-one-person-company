@@ -25,10 +25,41 @@ export function designScopeOf(root) {
 }
 
 /**
+ * Path segments that mean "this is a user interface".
+ *
+ * The configured globs alone are not enough: a project that puts its frontend in
+ * `apps/frontend/` silently fell outside a scope that listed `apps/web/`, and the
+ * whole mockup gate stopped applying without anyone noticing. Choosing a
+ * different directory name must not be a way to skip the gate, so this vocabulary
+ * is checked in addition to the configured globs.
+ *
+ * A false positive is cheap — write `design: none` on the task. A false negative
+ * is a screen nobody drew being built by an engineer.
+ */
+const UI_SEGMENTS = new Set([
+  'web',
+  'frontend',
+  'front-end',
+  'front',
+  'ui',
+  'client',
+  'mobile',
+  'ios',
+  'android',
+  'app',
+  'apps-www',
+  'www',
+  'site',
+  'screens',
+  'components'
+])
+
+/**
  * Does a write scope touch a UI path?
  *
  * Supports the two glob shapes the scope file uses: an exact path, and a
- * trailing `/**` meaning "everything under this directory".
+ * trailing `/**` meaning "everything under this directory". A path whose segments
+ * contain a UI word also counts, whatever the configured globs say.
  *
  * @param {string[]} writes - The task's write scopes.
  * @param {string[]} uiGlobs - Globs from design-scope.json.
@@ -36,8 +67,16 @@ export function designScopeOf(root) {
  */
 export function touchesUi(writes, uiGlobs) {
   const norm = (p) => String(p).replace(/^\.\//, '').replace(/\/+$/, '')
+  const isDesignOutput = (path) => path === 'design' || path.startsWith('design/')
+  const looksUi = (path) =>
+    !isDesignOutput(path) &&
+    path
+      .split('/')
+      .map((segment) => segment.replace(/\.\w+$/, '').toLowerCase())
+      .some((segment) => UI_SEGMENTS.has(segment))
   return (Array.isArray(writes) ? writes : []).some((write) => {
     const path = norm(write)
+    if (looksUi(path)) return true
     return uiGlobs.some((glob) => {
       const g = norm(glob)
       if (g.endsWith('/**')) {
@@ -118,6 +157,9 @@ export function mockupState(task, uiGlobs, root) {
   const writes = Array.isArray(task.writes) ? task.writes : task.writes ? [task.writes] : []
   if (!touchesUi(writes, uiGlobs)) return 'not-ui'
   if (!task.design) return 'missing-field'
+  // `design: none` is a deliberate declaration that this task has no screen. It
+  // is cheap, and it is reviewed: a reviewer can see the claim.
+  if (String(task.design).trim().toLowerCase() === 'none') return 'ok'
   if (!exists(join(root, String(task.design)))) return 'missing-file'
   // A mockup nobody approved is a mockup nobody looked at; the engineer waits.
   if (!isApproved(root, task.design)) return 'unapproved'

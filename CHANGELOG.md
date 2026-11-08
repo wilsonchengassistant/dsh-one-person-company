@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.10.1
+
+- **Fix: the mockup gate silently stopped applying when the frontend lived
+  somewhere else.** A real project put its UI in `apps/frontend/`, the scope file
+  listed `apps/web/`, and so `doctor` reported zero errors while an engineer
+  built the whole frontend with no approved mockup. Choosing a different
+  directory name must not be a way around the gate.
+  `touchesUi()` now also recognises a UI vocabulary in the path — `web`,
+  `frontend`, `ui`, `client`, `mobile`, `app`, `screens`, `components` and a few
+  more — in addition to the configured globs. A false positive costs one word
+  (`design: none`); a false negative is a screen nobody drew.
+- `design: none` is now a valid declaration meaning "this task has no screen",
+  so a backend task caught by the vocabulary can say so explicitly and be
+  reviewed for it.
+- `design/` itself is never treated as UI work: it is the output, not the product.
+
 ## 0.10.0
 
 **The rules are now enforced where an agent cannot skip them.** Reported from a
