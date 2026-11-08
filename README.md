@@ -106,7 +106,15 @@ playbook/                  13 documents, including 12-the-full-cycle.md
 
 ## Screenshots
 
-### The board
+### The board — table or flow
+
+![The flow view with a hover card](screenshots/flow.png)
+
+A table answers *what is there*. The **Flow** view answers *what is waiting on
+what*: tasks sit in columns by dependency depth, arrows run from a task to the
+tasks that depend on it, and an unmet dependency is a dashed amber arrow. Hover a
+node and everything unrelated dims while the whole task — owner, spec, write
+scope, mockup — appears next to the cursor.
 
 ![The Company board](screenshots/board.png)
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.12.0
+
+- **A Flow view of the board.** A table answers "what is there"; a graph answers
+  "what is waiting on what", which is the question you have when the board is
+  stuck. Toggle between **Table** and **Flow** above the board.
+- Tasks are laid out in columns by dependency depth, so nothing ever sits to the
+  left of something it waits for. A dependency that is not satisfied yet is drawn
+  as a dashed amber arrow; a satisfied one is solid grey.
+- Hovering a node dims everything unrelated, highlights its direct edges in both
+  directions, and shows the whole task: id, title, status, priority, owner, spec
+  and whether the spec is approved, dependencies, write scope and the mockup.
+- Cycles cannot be laid out — the recursion breaks and the doctor reports the
+  cycle, rather than the diagram hanging.
+- The hover card needed two labels the panel did not have (`Spec`, `Writes`), and
+  a node now shows the role rather than `agent:engineer` so it fits in 188px.
+
 ## 0.11.1
 
 - **Fix a deadlock the signature gate created.** A forged approval produces a

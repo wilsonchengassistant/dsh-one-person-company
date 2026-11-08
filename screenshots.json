@@ -34,6 +34,13 @@
         "en": "opc doctor is the health check, opc board is the derived view, opc pack prints the prompt for one task.",
         "zh": "opc doctor 是健康检查，opc board 是派生视图，opc pack 印出单个任务的 prompt。"
       }
+    },
+    {
+      "file": "screenshots/flow.png",
+      "caption": {
+        "en": "The Flow view: tasks laid out by dependency depth, arrows from a task to the tasks waiting on it, and a hover card with the whole task.",
+        "zh": "流程圖檢視：task 按依賴深度分欄，箭頭由前置 task 指向等着它的 task，hover 就見到整張 task。"
+      }
     }
   ]
 }
