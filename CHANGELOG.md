@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.1
+
+- **Fix: `opc new task --spec` crashed on the second use.** Reported from a real
+  project (`opc-bpms`): `The "path" argument must be of type string. Received
+  undefined`. The task-id allocator called `decorate()` without the project root,
+  so the first task that already carried a `spec:` made the next `new task`
+  throw. `decorate()` now tolerates a missing root instead of building a path
+  from `undefined`.
+- **`scripts/smoke-test.sh`, and preflight runs it as section 10.** It builds a
+  throwaway project from `template/` with the real `bootstrap.sh`, then drives the
+  CLI the way a user's first ten minutes do: init, spec, three tasks (the third
+  reproduces the crash above), board, cycle, pack, and the mockup gate. A release
+  cannot pass preflight if a cold start is broken — which unit-level checks all
+  did.
+
 ## 0.9.0
 
 - **A mockup is a single-file interactive prototype.** `design/screens/<name>.html`
