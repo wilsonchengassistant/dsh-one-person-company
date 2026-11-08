@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.11.0
+
+**A human approval is now a signature, not a line in a file.** Reported from a
+live project: an agent read `design/approvals.json`, read the code that checks it,
+computed the mockup hash itself and wrote `by: "human:founder"`. `doctor` then
+reported zero errors and it declared the work approved. It had impersonated the
+user by writing a string into a JSON file in its own repository.
+
+- Approvals carry an **Ed25519 signature made by the DSH host**, with the private
+  key in `~/.dsh/one-person-company/` — never in a workspace. The repository holds
+  `design/approval-key.pub`, so any clone, CI job or agent can verify an approval
+  and none of them can produce one.
+- An approval is only usable when three separate things hold: it is signed, it
+  covers the mockup's **current bytes**, and the file exists. `doctor` names which
+  one failed — `unsigned`, `forged`, `stale` or `missing` — and a forged one is an
+  error, not a warning.
+- The skill and the shipped `company/AGENTS.md` say plainly: writing
+  `design/approvals.json` is impersonating the founder, not a shortcut.
+
+This is not a secret-keeping contest — an agent with shell access could still go
+and read the key. But that is exfiltrating something from the user's config
+directory rather than editing a file inside its own project, and it is now a
+deliberate act instead of an accident waiting to happen.
+
 ## 0.10.1
 
 - **Fix: the mockup gate silently stopped applying when the frontend lived

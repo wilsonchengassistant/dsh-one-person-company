@@ -10,7 +10,7 @@ import { join } from 'node:path'
 import { readdirSync } from 'node:fs'
 import { read, exists, parseFrontmatter, hashBody } from './util.mjs'
 import { loadTasks, readyTasks, decorate, findCycles, STATUSES } from './board.mjs'
-import { designScopeOf, mockupState, approvalOf } from './design.mjs'
+import { designScopeOf, mockupState, approvalOf, approvalState } from './design.mjs'
 
 const CORE_FILES = [
   ['AGENTS.md', 'workspace operating manual'],
@@ -359,6 +359,17 @@ export function doctor(root) {
     if (!spec) continue
     const approval = approvalOf(root, t.design)
     if (approval?.approved !== true) continue
+    const validity = approvalState(root, t.design)
+    if (!validity.ok) {
+      const label =
+        validity.reason === 'forged'
+          ? 'was not signed by the panel — it looks hand-written'
+          : validity.reason === 'stale'
+            ? 'changed after it was approved'
+            : validity.detail
+      errors.push(`${t.id}: the approval for ${t.design} is not usable: it ${label}`)
+      continue
+    }
     const version = Number(spec.data.spec_version ?? 1)
     const approvedVersion = Number(approval.specVersion ?? 0)
     if (approvedVersion !== 0 && approvedVersion !== version) {

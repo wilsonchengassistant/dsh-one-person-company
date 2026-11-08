@@ -6,6 +6,7 @@
 
 import { join } from 'node:path'
 import { exists, read, hashBody } from './util.mjs'
+import { verifyApproval } from './approval.mjs'
 
 /**
  * The globs whose tasks need a mockup, from `company/design-scope.json`.
@@ -131,15 +132,41 @@ export function approvalOf(root, file) {
  * @returns {boolean}
  */
 export function isApproved(root, file) {
+  const state = approvalState(root, file)
+  return state.ok
+}
+
+/**
+ * Why an approval does or does not hold.
+ *
+ * Three separate things have to be true, and they fail differently: the record
+ * must be signed by the panel, it must cover the mockup's current bytes, and the
+ * mockup must still exist.
+ *
+ * @param {string} root - Project root.
+ * @param {string} file - Path such as `design/screens/capture.html`.
+ * @returns {{ok: boolean, reason: 'unsigned' | 'forged' | 'stale' | 'missing' | '' , detail: string}}
+ */
+export function approvalState(root, file) {
   const rel = String(file).replace(/^\.?\/?design\//, '')
   const approval = readApprovals(root)[rel]
-  if (approval?.approved !== true) return false
-  // The approval covers the file it was given, not the path. A mockup edited
-  // after approval is a different mockup, and nobody has looked at this one.
-  if (approval.mockupHash === undefined) return false
+  if (approval?.approved !== true) {
+    return { ok: false, reason: 'unsigned', detail: 'no approval has been recorded' }
+  }
+  // The signature is the authority. Without it, the record is a claim by whoever
+  // wrote the file — which, in a repository agents work in, is not evidence.
+  const verified = verifyApproval(root, rel, approval)
+  if (!verified.ok) {
+    return { ok: false, reason: 'forged', detail: verified.reason }
+  }
   const absolute = join(root, String(file))
-  if (!exists(absolute)) return false
-  return approval.mockupHash === hashBody(read(absolute))
+  if (!exists(absolute)) {
+    return { ok: false, reason: 'missing', detail: 'the mockup file does not exist' }
+  }
+  if (approval.mockupHash !== hashBody(read(absolute))) {
+    return { ok: false, reason: 'stale', detail: 'the mockup changed after it was approved' }
+  }
+  return { ok: true, reason: '', detail: '' }
 }
 
 /**

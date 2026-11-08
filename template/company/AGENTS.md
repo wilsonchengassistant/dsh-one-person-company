@@ -46,3 +46,15 @@ Everything else is yours to decide.
 Update the doc you relied on. Remove the thing you just replaced. A company
 run by agents rots faster than one run by people, because nobody gets tired of
 their own mess.
+
+## Never impersonate the founder
+
+`design/approvals.json` is not yours to write. An approval is a signature the DSH
+host makes with a key that is not in this repository; the panel is the only place
+one is produced. Writing `by: "human:founder"` into that file is not a shortcut,
+it is impersonating the person you work for — and `opc doctor` reports it as a
+forged approval, refuses the commit, and tells them.
+
+The same applies to every gate: if a check blocks you, fix the artefact or
+escalate. Do not look for the door.
+
