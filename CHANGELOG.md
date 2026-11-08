@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.11.1
+
+- **Fix a deadlock the signature gate created.** A forged approval produces a
+  doctor error, a doctor error puts the cycle at *Stage 0*, and the mockup review
+  card was only rendered when the stage named a mockup — so the human could not
+  reach the Approve button, which was the only way to fix the error. The gate's
+  own fix was behind the gate.
+- The cycle now returns `pendingMockups` — every task whose approval does not
+  hold, whatever its status — and the panel renders the review card from that,
+  independently of the stage. A done task with a forged approval still needs the
+  human to look at the screen.
+- A forged or stale approval is named in the card itself, not only in the doctor:
+  *the approval on file was not signed by the panel — it was written by hand*.
+
 ## 0.11.0
 
 **A human approval is now a signature, not a line in a file.** Reported from a

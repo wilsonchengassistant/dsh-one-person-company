@@ -11,7 +11,7 @@ import { join } from 'node:path'
 import { exists, read, listFiles, parseFrontmatter, hashBody } from './util.mjs'
 import { doctor } from './doctor.mjs'
 import { loadTasks, decorate, readyTasks } from './board.mjs'
-import { designScopeOf, awaitingDesign, mockupState, approvalOf } from './design.mjs'
+import { designScopeOf, awaitingDesign, mockupState, approvalOf, approvalState } from './design.mjs'
 
 /**
  * @param {string} root - Project root (the directory containing `company/`).
@@ -66,6 +66,27 @@ export function computeCycle(root) {
   // The checks come first. Offering "build the next task" while the company is
   // inconsistent is how a shortcut becomes the default.
   const report = doctor(root)
+
+  // Mockups waiting for the human. This is exposed independently of the stage so
+  // the panel can always offer the Approve button — including at Stage 0, which
+  // is exactly where a forged or stale approval puts you. A gate whose only fix
+  // is behind the gate is a deadlock.
+  // Any task with a mockup whose approval does not hold — whatever its status.
+  // A done task with a forged approval still needs the human to look at the
+  // screen, and blocking that behind the stage that the forgery created would be
+  // a deadlock.
+  const pendingMockups = tasks
+    .filter((task) => task.design && String(task.design).trim().toLowerCase() !== 'none')
+    .filter((task) => task.status !== 'dropped')
+    .map((task) => ({ task, state: approvalState(root, task.design) }))
+    .filter((entry) => ['unsigned', 'forged', 'stale'].includes(entry.state.reason))
+    .map((entry) => ({
+      file: String(entry.task.design),
+      taskId: entry.task.id,
+      taskTitle: String(entry.task.title ?? ''),
+      reason: entry.state.reason,
+      detail: entry.state.detail
+    }))
 
   const facts = {
     checks: { errors: report.errors.length, warnings: report.warnings.length },
@@ -218,5 +239,5 @@ export function computeCycle(root) {
     }
   }
 
-  return { facts, stage: { ...stage, walkthrough } }
+  return { facts, stage: { ...stage, walkthrough }, pendingMockups }
 }
