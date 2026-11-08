@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.14.2
+
+- **Removed a whole bootstrapped workspace that was committed into the repository
+  root.** Commit `8ac5b31` shipped `.agent/`, `company/`, `design/` and `docs/` at
+  the top level: a test ran `opc init` from the wrong directory, the `--dir` flag
+  it passed did not exist, and `init` scaffolded into whatever directory it was
+  standing in. Nothing private went out — it was the empty "Untitled Company"
+  template, and `files` in package.json never included it, so the published tarball
+  was unaffected. The GitHub repository still should not look like a workspace.
+- `opc init --dir <path>` now exists, so a script can say where instead of relying
+  on the working directory.
+- preflight gained section 10: the repository root must not contain `.agent/`,
+  `company/`, `design/`, `docs/`, `playbook/` or `tooling/`. The guard is a check
+  rather than a `.gitignore`, because an ignored stray directory is a stray
+  directory nobody notices.
+
 ## 0.14.1
 
 Found in a full test pass, both of them "the system said it was fine" bugs:

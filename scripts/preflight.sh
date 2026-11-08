@@ -169,7 +169,26 @@ else
 fi
 
 # --------------------------------------------------------------------------
-section "10. Cold start"
+section "10. The repository is a plugin, not a workspace"
+# Found in the wild: a test ran `opc init` in the wrong directory and commit
+# 8ac5b31 shipped a bootstrapped workspace at the repo root. No private data went
+# out (it was the empty template), but a plugin repo that looks like a workspace
+# is confusing and wrong. Only template/ may contain scaffolding.
+stray=""
+for path in .agent company charter.md design docs playbook tooling; do
+  if [ -e "$path" ]; then stray="$stray $path"; fi
+done
+if [ -z "$stray" ]; then
+  ok "no workspace scaffolding at the repo root"
+else
+  bad "workspace scaffolding at the repo root:$stray — the plugin ships template/, not an instance"
+fi
+if [ -f ".agent/roles/engineer.md" ] || [ -f "company/charter.md" ] || [ -f "docs/architecture/README.md" ]; then
+  bad "a real workspace is present at the repo root: delete it, it does not belong in the plugin"
+fi
+
+# --------------------------------------------------------------------------
+section "11. Cold start"
 # The one check that catches what unit checks cannot: the machine as a user
 # actually receives it. It builds a throwaway project from template/ with the real
 # bootstrap.sh and drives the CLI the way the first ten minutes do.
@@ -181,7 +200,7 @@ else
 fi
 
 # --------------------------------------------------------------------------
-section "11. The architecture template still has its four diagrams"
+section "12. The architecture template still has its four diagrams"
 arch="template/tooling/src/templates.mjs"
 count=$(grep -c 'mermaid' "$arch" 2>/dev/null || echo 0)
 if node template/tooling/src/cli.mjs --help 2>/dev/null | grep -q "cycle"; then ok "the CLI has the cycle command"; else bad "the bundled CLI has no cycle command — template/ is stale"; fi

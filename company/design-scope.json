@@ -1,8 +1,0 @@
-{
-  "//": "Any task whose writes match one of these globs needs a mockup before an engineer starts.",
-  "ui": [
-    "apps/web/**",
-    "apps/mobile/**",
-    "packages/ui/**"
-  ]
-}

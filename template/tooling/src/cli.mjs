@@ -14,7 +14,7 @@
 //
 // No dependencies. Node >= 18.
 
-import { join, dirname } from 'node:path'
+import { join, dirname, resolve } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { createPrivateKey, createPublicKey, generateKeyPairSync, sign } from 'node:crypto'
 import { homedir } from 'node:os'
@@ -812,7 +812,7 @@ function usage() {
                                      record the human's answer from ask_user
   opc install-hooks                  install the pre-commit hook
 
-  opc init                           scaffold the company OS
+  opc init [--dir <path>]            scaffold the company OS (default: here)
   opc new spec "Title"               create a feature spec
   opc new task "Title"               create a task
                                      (--spec path --owner agent:x --priority P1
@@ -831,7 +831,16 @@ or install the shortcut once with:
 try {
   const root = repoRoot()
   switch (cmd) {
-    case 'init': init(root); break
+    case 'init': {
+      // `--dir` exists so a script can scaffold a directory it names, instead of
+      // whatever directory it happens to be standing in. Found in the wild: a test
+      // ran `init` from the plugin repo, the flag was ignored, and a whole stray
+      // workspace was committed into the published repository.
+      const dir = flag('dir')
+      const target = typeof dir === 'string' ? resolve(dir) : root
+      init(target)
+      break
+    }
     case 'new': {
       const kind = argv[1]
       const { pos, flags } = parseArgs(argv.slice(2))
