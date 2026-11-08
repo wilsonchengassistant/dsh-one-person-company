@@ -80,13 +80,22 @@ export function computeCycle(root) {
     .filter((task) => task.status !== 'dropped')
     .map((task) => ({ task, state: approvalState(root, task.design) }))
     .filter((entry) => ['unsigned', 'forged', 'stale'].includes(entry.state.reason))
-    .map((entry) => ({
-      file: String(entry.task.design),
-      taskId: entry.task.id,
-      taskTitle: String(entry.task.title ?? ''),
-      reason: entry.state.reason,
-      detail: entry.state.detail
-    }))
+    .map((entry) => {
+      // Show back what the agent says the human answered. An approval that claims a
+      // conversation the human never had is then visible rather than hidden.
+      const record = approvalOf(root, entry.task.design)
+      return {
+        file: String(entry.task.design),
+        taskId: entry.task.id,
+        taskTitle: String(entry.task.title ?? ''),
+        reason: entry.state.reason,
+        detail: entry.state.detail,
+        record:
+          record === null
+            ? null
+            : { via: record.via ?? '', question: record.question ?? '', answer: record.answer ?? '', at: record.at ?? '' }
+      }
+    })
 
   const facts = {
     checks: { errors: report.errors.length, warnings: report.warnings.length },
@@ -188,10 +197,10 @@ export function computeCycle(root) {
     stage = {
       n: 4,
       title: 'Approve the mockup',
-      detail: `${first.id}: ${first.title} — ${first.design} exists but no human has approved it. Open it, play with the states, then approve it in this panel.`,
+      detail: `${first.id}: ${first.title} — ${first.design} exists but has not been approved. Ask the human with ask_user_question, then record the answer with opc approve.`,
       actor: 'human',
       mockup: { file: String(first.design), taskId: first.id },
-      prompt: `Open ${first.design} and review it: the real copy, the four states, the primary action, and whether it uses the tokens. Approve it in the Company board panel, or say what has to change before the engineer starts ${first.id}.`
+      prompt: `The mockup ${first.design} for ${first.id} is waiting for the human. Call ask_user_question with id "opc-approve:${first.design}" and options Approve / Request changes, naming the mockup so they know what to look at. When they answer, record it: node tooling/src/cli.mjs approve ${first.design} --question "<the exact question you asked>" --answer "<the option they chose>". If they ask for changes, do not record an approval — rebuild the mockup, or amend the spec if the requirement itself changed.`
     }
   } else if (byStatus('review').length > 0) {
     const first = byStatus('review')[0]

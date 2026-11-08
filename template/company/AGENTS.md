@@ -49,11 +49,17 @@ their own mess.
 
 ## Never impersonate the founder
 
-`design/approvals.json` is not yours to write. An approval is a signature the DSH
-host makes with a key that is not in this repository; the panel is the only place
-one is produced. Writing `by: "human:founder"` into that file is not a shortcut,
-it is impersonating the person you work for — and `opc doctor` reports it as a
-forged approval, refuses the commit, and tells them.
+A mockup is approved by a person, in a conversation, and the record of that
+conversation is the approval. Two steps, always in this order:
+
+1. ask with `ask_user_question` — id `opc-approve:<design path>`, options
+   `Approve` / `Request changes`;
+2. record it with `opc approve <design path> --question "..." --answer "..."`.
+
+The question and the answer are stored and shown back in Company board. Never run
+`opc approve` without having asked: writing an approval nobody gave is
+impersonating the founder, `opc doctor` reports it as forged, and the human sees
+the question you claim you asked.
 
 The same applies to every gate: if a check blocks you, fix the artefact or
 escalate. Do not look for the door.

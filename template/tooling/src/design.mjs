@@ -155,6 +155,18 @@ export function approvalState(root, file) {
   }
   // The signature is the authority. Without it, the record is a claim by whoever
   // wrote the file — which, in a repository agents work in, is not evidence.
+  // An approval without the conversation it came from is an assertion, not
+  // evidence — and the panel has nowhere to show it back to the human.
+  if (String(approval.via ?? '') !== 'ask_user') {
+    return {
+      ok: false,
+      reason: 'forged',
+      detail: 'the approval does not record the question it answered — approvals come from ask_user'
+    }
+  }
+  if (!String(approval.question ?? '').trim() || !String(approval.answer ?? '').trim()) {
+    return { ok: false, reason: 'forged', detail: 'the approval records no question or no answer' }
+  }
   const verified = verifyApproval(root, rel, approval)
   if (!verified.ok) {
     return { ok: false, reason: 'forged', detail: verified.reason }

@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.14.0
+
+**Approval moved back into the conversation.** The Approve button is gone: the
+agent sends the request with `ask_user_question` and records the answer with
+`opc approve`. The panel keeps the preview — you can still play with the four
+states there — but the decision happens in the chat where the question can carry
+its context.
+
+- `opc approve <mockup> --question "..." --answer "..."` writes the approval:
+  the question, the answer, the spec version and the mockup hash, signed.
+- An approval is **only valid if it records the conversation**: `via: ask_user`,
+  a non-empty question and a non-empty answer. The old hand-written
+  `approved: true` is now reported as forged, and so is any record without the
+  pair.
+- Company board shows the recorded question and answer back to you next to the
+  mockup, and says *"you have not been asked yet"* when there is no record. That
+  is the check that replaces the button: a fabricated approval is a fabricated
+  conversation you can see you never had.
+- The `approveDesign` Remote method was removed, so there is exactly one approval
+  path.
+
+**Honest note on the trade-off:** the panel button was the only approval an agent
+could not produce at all, because the signing key never left the host. Now the
+agent runs `opc approve`, which signs with the same key — so the signature proves
+the record was written by the tool rather than by a text editor, not that a human
+answered. What protects you is that the question and answer are shown back to you
+and are part of the repo's history. If you want that guarantee back, the panel
+button is one line to restore.
+
 ## 0.13.0
 
 - **Middle-drag pans the flow.** A diagram you have to aim at a scrollbar to move

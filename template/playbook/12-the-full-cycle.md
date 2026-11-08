@@ -97,7 +97,10 @@ screens first* instead of handing you a build task.
 you understand this screen with no explanation? Are all four states there? Is the
 primary action obvious?
 
-Then press **Approve this mockup**, or **Request changes** with a reason.
+Then approve it **in the chat** — the agent asks with `ask_user_question` and
+records your answer with `opc approve`. The question and your answer are stored
+and shown back in Company board, which is what makes the approval checkable
+rather than asserted.
 
 ### When playing with the mockup changes the requirement
 

@@ -124,10 +124,34 @@ The link between two files has a name:
 tokens, embedded JavaScript, a state switcher for empty / loading / error /
 success, and a working primary action. One file, no build step.
 
-The human approves it in the panel, which records the decision and the
-`spec_version` it was made against in `design/approvals.json`. A UI task an
-engineer owns cannot start until that approval exists; the designer's own tasks
-are exempt.
+**The human approves it in the chat.** Ask with `ask_user_question`, then record
+the answer with `opc approve`. Two steps, in this order:
+
+```json
+{
+  "questions": [{
+    "id": "opc-approve:design/screens/capture.html",
+    "question": "Approve the capture screen mockup? Play with the four states in Company board first.",
+    "options": [{ "label": "Approve" }, { "label": "Request changes" }]
+  }]
+}
+```
+
+```sh
+node tooling/src/cli.mjs approve design/screens/capture.html \
+  --question "Approve the capture screen mockup?" --answer "Approve"
+```
+
+The question and the answer are **recorded and shown back to the human in
+Company board**. That is the point: an approval claiming a conversation the human
+never had is visible rather than hidden.
+
+**Never run `opc approve` without having actually asked.** It is not a
+formality — it records a real decision, and the human sees the question you claim
+you asked.
+
+A UI task an engineer owns cannot start until that approval exists; the designer's
+own tasks are exempt.
 
 **A rejected mockup usually means the requirement changed.** That is expected: a
 mockup is the requirement in another language. When it happens, do not start
@@ -148,14 +172,13 @@ they are owned artefacts rather than generated pictures.
 
 ## Never impersonate the founder
 
-`design/approvals.json` is not yours to write. An approval is an **Ed25519
-signature the DSH host makes**, with a private key that is not in this repository;
-the panel is the only thing that produces one.
+An approval is the record of a conversation, not a flag you can set. It carries
+the question you asked, the answer the human gave, and a signature — and Company
+board shows the question and answer back to the human.
 
-Writing `by: "human:founder"` into that file is not a shortcut, it is
-impersonating the person you work for. `opc doctor` reports it as a forged
-approval, `opc check-commit` refuses the commit, and the human sees it on the
-Company board.
+Writing an approval nobody gave is impersonating the person you work for.
+`opc doctor` reports it as forged, `opc check-commit` refuses the commit, and the
+human sees the question you claim you asked.
 
 This was learned the hard way: an agent read the file, read the code that checks
 it, computed the mockup hash itself and wrote itself an approval, then reported

@@ -204,12 +204,23 @@ CSS (the tokens) and its own JavaScript, with a state switcher for empty /
 loading / error / success and a working primary action. One file, double-click,
 no build step.
 
-![The mockup rendered inside the panel, with Approve and Request changes](screenshots/mockup-review.png)
+![The mockup rendered inside the panel](screenshots/mockup-review.png)
 
-The panel renders it in an iframe, so you play with it where you already are. Then
-**Approve this mockup**, or **Request changes** with a reason. A UI task an
-engineer owns cannot start until its mockup is approved; the designer's own tasks
-are exempt because they produce the mockups.
+The panel renders it in an iframe, so you play with it where you already are.
+Approval happens **in the chat**, not with a button:
+
+1. the agent asks with `ask_user_question` — the request arrives as a question
+   card with the context that produced it;
+2. you answer there;
+3. the agent records it with `opc approve <mockup> --question "..." --answer "..."`.
+
+The question and your answer are stored in `design/approvals.json` and shown back
+to you in Company board next to the mockup. An approval that records no
+conversation is treated as forged, which is what stops an agent from writing
+`approved: true` on its own behalf.
+
+A UI task an engineer owns cannot start until that approval exists; the designer's
+own tasks are exempt because they produce the mockups.
 
 ### When the mockup changes the requirement
 

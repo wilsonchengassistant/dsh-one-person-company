@@ -72,14 +72,14 @@ export function verifyApproval(root, file, record) {
   if (key === null) {
     return {
       ok: false,
-      reason: `no ${PUBLIC_KEY_FILE} — no approval in this workspace has ever been signed. Approve it in Company board.`
+      reason: `no ${PUBLIC_KEY_FILE} — no approval in this workspace has ever been recorded. Run \`opc approve\` after asking.`
     }
   }
   const signature = typeof record?.sig === 'string' ? record.sig : ''
   if (signature === '') {
     return {
       ok: false,
-      reason: 'the approval carries no signature — it was written by hand, not by the panel'
+      reason: 'the approval carries no signature — it was written by hand, not by `opc approve`'
     }
   }
   const message = canonicalApproval({ ...record, file })

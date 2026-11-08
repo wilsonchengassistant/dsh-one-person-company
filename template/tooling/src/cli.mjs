@@ -16,9 +16,11 @@
 
 import { join, dirname } from 'node:path'
 import { execFileSync } from 'node:child_process'
+import { createPrivateKey, createPublicKey, generateKeyPairSync, sign } from 'node:crypto'
+import { homedir } from 'node:os'
 import { chmodSync, mkdirSync } from 'node:fs'
 import {
-  repoRoot, read, write, exists, listFiles, parseFrontmatter,
+  hashBody, repoRoot, read, write, exists, listFiles, parseFrontmatter,
   stringifyFrontmatter, slugify, today, nextTaskId,
 } from './util.mjs'
 import {
@@ -30,6 +32,7 @@ import { ROLES, FOUNDER_GATES } from './roles.mjs'
 import { loadTasks, renderBoard, boardSummary, decorate, readyTasks } from './board.mjs'
 import { computeCycle } from './cycle.mjs'
 import { checkChange } from './check.mjs'
+import { canonicalApproval } from './approval.mjs'
 import { buildContextPack } from './context.mjs'
 import { doctor, renderDoctor } from './doctor.mjs'
 
@@ -627,6 +630,98 @@ node "$(git rev-parse --show-toplevel)/tooling/src/cli.mjs" check-commit
   console.log('  git commit --no-verify')
 }
 
+/**
+ * `opc approve` — record the human's answer to a mockup question.
+ *
+ * The approval is not a flag; it is the conversation. The agent asks with
+ * `ask_user_question`, the human answers in the chat, and this command writes the
+ * question, the answer and a signature so nothing can be quietly edited later.
+ *
+ * The signature lives on the machine (`~/.dsh/one-person-company/approval.key`),
+ * so it proves the record went through this command rather than through a text
+ * editor. It cannot prove the question was asked — that is what the panel showing
+ * the question and answer back to the human is for.
+ */
+function approveDesignFile(root, opts) {
+  const file = String(opts.file ?? opts.positional ?? '')
+  if (!file) {
+    console.error('opc: approve needs a mockup path, e.g. opc approve design/screens/ledger.html')
+    process.exitCode = 1
+    return
+  }
+  const rel = file.replace(/^\.\/?/, '').replace(/^design\//, '')
+  const absolute = join(root, 'design', rel)
+  if (!exists(absolute)) {
+    console.error(`opc: no mockup at design/${rel}`)
+    process.exitCode = 1
+    return
+  }
+  const question = String(opts.question ?? '').trim()
+  const answer = String(opts.answer ?? '').trim()
+  if (!question || !answer) {
+    console.error('opc: approve needs --question "<what you asked>" and --answer "<what the human chose>"')
+    console.error('     They are recorded and shown back to the human, which is what makes the')
+    console.error('     approval checkable. Ask with ask_user_question first, then paste both.')
+    process.exitCode = 1
+    return
+  }
+
+  const approved = !/^(request changes|reject|no)/i.test(answer)
+
+  // Which spec version was this decision made against?
+  const board = decorate(loadTasks(root), root)
+  const task = board.find((entry) => String(entry.design ?? '') === `design/${rel}`)
+  let specVersion = 0
+  if (task?.spec && exists(join(root, String(task.spec)))) {
+    specVersion = Number(parseFrontmatter(read(join(root, String(task.spec)))).data.spec_version ?? 1)
+  }
+
+  const record = {
+    approved,
+    via: 'ask_user',
+    question,
+    answer,
+    at: new Date().toISOString(),
+    by: 'human:founder',
+    note: approved ? '' : answer,
+    specVersion,
+    mockupHash: hashBody(read(absolute))
+  }
+
+  const keyPath = join(homedir(), '.dsh', 'one-person-company', 'approval.key')
+  let privateKey
+  if (exists(keyPath)) {
+    privateKey = createPrivateKey(read(keyPath))
+  } else {
+    const pair = generateKeyPairSync('ed25519')
+    mkdirSync(join(homedir(), '.dsh', 'one-person-company'), { recursive: true, mode: 0o700 })
+    write(keyPath, pair.privateKey.export({ type: 'pkcs8', format: 'pem' }))
+    privateKey = pair.privateKey
+  }
+  const publicKey = createPublicKey(privateKey).export({ type: 'spki', format: 'pem' })
+  write(join(root, 'design', 'approval-key.pub'), publicKey)
+
+  record.sig = sign(null, Buffer.from(canonicalApproval({ ...record, file: rel }), 'utf8'), privateKey).toString('base64')
+
+  const approvalsPath = join(root, 'design', 'approvals.json')
+  let current = {}
+  if (exists(approvalsPath)) {
+    try {
+      current = JSON.parse(read(approvalsPath)) ?? {}
+    } catch {
+      current = {}
+    }
+  }
+  current[rel] = record
+  write(approvalsPath, `${JSON.stringify(current, null, 2)}\n`)
+
+  console.log(`Recorded ${approved ? 'approval' : 'request for changes'} for design/${rel}`)
+  console.log(`  asked : ${question}`)
+  console.log(`  answer: ${answer}`)
+  console.log('')
+  console.log('It carries the question and the answer, so Company board shows them back to the human.')
+}
+
 function showBoard(root, opts) {
   const tasks = decorate(loadTasks(root), root)
   if (opts.json) {
@@ -713,6 +808,8 @@ function usage() {
                                      the prompt for one task
   opc budget                         the spend ceilings
   opc check-commit                   the gate a pre-commit hook calls
+  opc approve <mockup> --question ... --answer ...
+                                     record the human's answer from ask_user
   opc install-hooks                  install the pre-commit hook
 
   opc init                           scaffold the company OS
@@ -750,6 +847,17 @@ try {
     case 'board': showBoard(root, { ready: flag('ready'), json: flag('json') }); break
     case 'budget': showBudget(root); break
     case 'check-commit': runCheckCommit(root, { paths: flag('paths'), 'skip-doctor': flag('skip-doctor') }); break
+    case 'approve': {
+      // argv is already `process.argv.slice(2)`, so slice(1) is what follows the
+      // command name.
+      const { pos, flags } = parseArgs(argv.slice(1))
+      approveDesignFile(root, {
+        positional: pos.join(' '),
+        question: flags.question,
+        answer: flags.answer
+      })
+      break
+    }
     case 'install-hooks': installHooks(root); break
     case 'cycle': showCycle(root); break
     case 'pack': showPack(root, argv[1], { roles: flag('roles') }); break

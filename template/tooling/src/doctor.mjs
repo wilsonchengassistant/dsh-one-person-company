@@ -161,7 +161,7 @@ export function doctor(root) {
         errors.push(`${t.id}: design ${t.design} does not exist`)
       } else if (mockup === 'unapproved') {
         errors.push(
-          `${t.id}: design ${t.design} has not been approved by a human — approve it in Company board before an engineer starts`
+          `${t.id}: design ${t.design} has not been approved by a human — ask with ask_user_question, then run opc approve`
         )
       }
     }
@@ -363,7 +363,7 @@ export function doctor(root) {
     if (!validity.ok) {
       const label =
         validity.reason === 'forged'
-          ? 'was not signed by the panel — it looks hand-written'
+          ? 'was not signed by the panel — it looks hand-written rather than recorded by opc approve'
           : validity.reason === 'stale'
             ? 'changed after it was approved'
             : validity.detail
