@@ -4,6 +4,7 @@
 // needs a *derived* view, not a hand-maintained status field.
 
 import { join } from 'node:path'
+import { designScopeOf, mockupState } from './design.mjs'
 import { read, listFiles, parseFrontmatter, exists } from './util.mjs'
 
 export const STATUSES = ['backlog', 'ready', 'in_progress', 'review', 'done', 'blocked', 'dropped']
@@ -57,6 +58,18 @@ export function decorate(tasks, root) {
     }
     t.specApproved = t.specExists && t.specStatus === 'approved'
     t.specMissing = Boolean(t.spec) && !t.specExists
+
+    // The mockup gate, resolved here so `readyTasks` and the doctor agree about
+    // whether a task may start. Without a root there is nothing to resolve, and
+    // the gate stays unknown rather than passing.
+    t.designGate = undefined
+    if (root !== undefined) {
+      try {
+        t.designGate = mockupState(t, designScopeOf(root), root)
+      } catch {
+        t.designGate = undefined
+      }
+    }
   }
   return tasks
 }
@@ -66,13 +79,25 @@ export function decorate(tasks, root) {
  * dependencies are done, its spec exists, and that spec is APPROVED. The
  * board's own rule 1 and rule 2 are enforced here rather than in prose.
  */
+/**
+ * The tasks that may start now.
+ *
+ * A task that would fail a gate is not ready, however clean its dependencies are.
+ * `board --ready` claiming a task can start while `doctor` refuses it is exactly
+ * the "the system said it was fine" failure the gates exist to prevent, so the
+ * mockup gate is applied here too.
+ *
+ * @param {object[]} tasks - Decorated tasks (see `decorate`, which sets `designGate`).
+ * @returns {object[]}
+ */
 export function readyTasks(tasks) {
   return tasks.filter(
     (t) =>
       (t.status === 'ready' || t.status === 'backlog') &&
       t.unmetDeps.length === 0 &&
       t.missingDeps.length === 0 &&
-      t.specApproved
+      t.specApproved &&
+      (t.designGate === undefined || t.designGate === 'ok' || t.designGate === 'not-ui')
   )
 }
 

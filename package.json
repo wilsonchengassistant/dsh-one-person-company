@@ -1,6 +1,6 @@
 {
   "name": "dsh-one-person-company",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "description": "Run a software company alone with a team of AI agents: an embedded `one-person-company` skill plus a sidebar task board. Bootstraps a repo-native operating system — ten role charters, spec-as-contract workflow, and an `opc` CLI that assembles the exact prompt for each agent.",
   "license": "MIT",
   "type": "module",

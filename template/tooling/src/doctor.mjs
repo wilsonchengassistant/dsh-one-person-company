@@ -60,6 +60,14 @@ const CORE_ROLES = [
 
 const ACTIVE_STATUSES = ['ready', 'in_progress', 'review']
 
+/**
+ * A task that has actually been picked up. The verification command matters from
+ * this point: before it, the task exists but nobody has promised a way to prove
+ * it — and `opc new task` should not produce a workspace that fails its own
+ * checks before anyone has done anything.
+ */
+const STARTED_STATUSES = ['in_progress', 'review', 'done']
+
 /** The template ships a commented-out example; that is not a command. */
 function hasRealCommand(block) {
   const lines = block
@@ -202,7 +210,11 @@ export function doctor(root) {
     } else {
       const block = /```sh\n([\s\S]*?)```/.exec(body)
       if (!block || !hasRealCommand(block[1])) {
-        errors.push(`${t.id}: the Verification command block is empty or only comments`)
+        // A task nobody has started may not know its command yet; a task that
+        // claims to be underway must. Same rule the write scope already uses.
+        const message = `${t.id}: the Verification command block is empty or only comments`
+        if (STARTED_STATUSES.includes(t.status)) errors.push(message)
+        else warnings.push(message)
       } else if (!exists(join(root, 'package.json')) && /\b(pnpm|npm|yarn)\b/.test(block[1])) {
         warnings.push(
           `${t.id}: the verification command uses a package manager but there is no root package.json — it cannot run in this repo`

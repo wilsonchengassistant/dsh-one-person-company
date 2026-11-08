@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.14.1
+
+Found in a full test pass, both of them "the system said it was fine" bugs:
+
+- **`board --ready` listed tasks that the gate refuses.** Ready meant "dependencies
+  are done and the spec is approved" — a UI task with an unapproved mockup showed
+  as ready while `doctor` said an engineer must not start it. `decorate()` now
+  resolves the mockup gate per task and `readyTasks()` honours it, so the board and
+  the doctor cannot disagree about whether a task may start.
+- **`opc new task` produced a workspace that failed its own checks.** The empty
+  verification block was an error even for a task nobody had picked up, so a fresh
+  project went red on the first task. It is now an error only for a task in
+  progress, review or done — before that it is a warning, because nobody has
+  promised a way to prove the work yet.
+
 ## 0.14.0
 
 **Approval moved back into the conversation.** The Approve button is gone: the
