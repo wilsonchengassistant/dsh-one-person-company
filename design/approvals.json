@@ -1,0 +1,4 @@
+{
+  "//": "One entry per screen the human has approved. Written by the Company board panel's Approve button. A mockup that is not listed here has not been approved, and no engineer may start its task.",
+  "//shape": { "screens/<name>.html": { "approved": true, "at": "<ISO>", "by": "human:founder" } }
+}

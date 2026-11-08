@@ -1,0 +1,54 @@
+/* The single source of truth for visual values.
+ *
+ * The designer adds to this file; the engineer consumes it. No raw hex, no magic
+ * pixel numbers anywhere else in design/ or in the product — a value that is not
+ * here does not exist yet.
+ */
+
+:root {
+  /* colour — name by role, never by hue */
+  --color-bg: #ffffff;
+  --color-surface: #f7f7f8;
+  --color-border: #e3e3e6;
+  --color-text: #18181b;
+  --color-text-muted: #6b6b74;
+  --color-primary: #2563eb;
+  --color-primary-contrast: #ffffff;
+  --color-success: #16a34a;
+  --color-warning: #b45309;
+  --color-danger: #dc2626;
+
+  /* type — a scale, not a pile of sizes */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --text-xs: 11px;
+  --text-sm: 12.5px;
+  --text-base: 14px;
+  --text-lg: 17px;
+  --text-xl: 22px;
+  --leading-tight: 1.25;
+  --leading-normal: 1.55;
+
+  /* space — a 4px rhythm */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* shape and motion */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.08);
+  --duration-fast: 120ms;
+}
+
+/* Accessibility floor, applied everywhere rather than remembered per screen. */
+* { box-sizing: border-box; }
+:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

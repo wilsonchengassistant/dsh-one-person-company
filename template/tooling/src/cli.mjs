@@ -459,7 +459,7 @@ function newSpec(root, title) {
 
 function newTask(root, title, opts = {}) {
   if (!title) throw new Error('Usage: opc new task "Title" [--spec path] [--owner agent:x] [--priority P1]')
-  const tasks = decorate(loadTasks(root))
+  const tasks = decorate(loadTasks(root), root)
   const id = nextTaskId(tasks)
   const slug = slugify(title)
   const path = join(root, 'company', 'tasks', `${id}-${slug}.md`)

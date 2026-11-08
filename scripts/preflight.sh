@@ -78,6 +78,7 @@ done
 if bash -n bootstrap.sh >/dev/null 2>&1; then ok "bash -n bootstrap.sh"; else bad "syntax error in bootstrap.sh"; fi
 if bash -n scripts/preflight.sh >/dev/null 2>&1; then ok "bash -n scripts/preflight.sh"; else bad "syntax error in scripts/preflight.sh"; fi
 if bash -n scripts/sync-template.sh >/dev/null 2>&1; then ok "bash -n scripts/sync-template.sh"; else bad "syntax error in scripts/sync-template.sh"; fi
+if bash -n scripts/smoke-test.sh >/dev/null 2>&1; then ok "bash -n scripts/smoke-test.sh"; else bad "syntax error in scripts/smoke-test.sh"; fi
 if bash -n scripts/install-local.sh >/dev/null 2>&1; then ok "bash -n scripts/install-local.sh"; else bad "syntax error in scripts/install-local.sh"; fi
 
 # --------------------------------------------------------------------------
@@ -167,7 +168,19 @@ else
 fi
 
 # --------------------------------------------------------------------------
-section "10. The architecture template still has its four diagrams"
+section "10. Cold start"
+# The one check that catches what unit checks cannot: the machine as a user
+# actually receives it. It builds a throwaway project from template/ with the real
+# bootstrap.sh and drives the CLI the way the first ten minutes do.
+if bash scripts/smoke-test.sh >/tmp/opc-smoke-preflight.log 2>&1; then
+  ok "a cold start works end to end ($(grep -c '✓' /tmp/opc-smoke-preflight.log) checks)"
+else
+  bad "the cold start smoke test failed:"
+  grep '✗' /tmp/opc-smoke-preflight.log | head -6 | sed 's/^/      /'
+fi
+
+# --------------------------------------------------------------------------
+section "11. The architecture template still has its four diagrams"
 arch="template/tooling/src/templates.mjs"
 count=$(grep -c 'mermaid' "$arch" 2>/dev/null || echo 0)
 if node template/tooling/src/cli.mjs --help 2>/dev/null | grep -q "cycle"; then ok "the CLI has the cycle command"; else bad "the bundled CLI has no cycle command — template/ is stale"; fi

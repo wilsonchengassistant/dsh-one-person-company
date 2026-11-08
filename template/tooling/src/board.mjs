@@ -44,7 +44,11 @@ export function decorate(tasks, root) {
 
     // The spec is the contract. Resolve it for real: a task whose spec is
     // missing, or whose spec is still a draft, is not ready to start.
-    t.specPath = t.spec ? join(root, t.spec) : null
+    //
+    // `root` is optional so a caller that only needs the dependency graph (the
+    // task id allocator, for one) cannot crash with a path TypeError. When it is
+    // absent the spec is reported as unresolved rather than throwing.
+    t.specPath = root !== undefined && t.spec ? join(root, t.spec) : null
     t.specExists = Boolean(t.specPath && exists(t.specPath))
     t.specStatus = null
     if (t.specExists) {
