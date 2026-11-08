@@ -146,6 +146,25 @@ reviewer treats an unchanged diagram against a changed component as a blocking
 finding. A diagram that does not match the code is worse than no diagram, so
 they are owned artefacts rather than generated pictures.
 
+## Never impersonate the founder
+
+`design/approvals.json` is not yours to write. An approval is an **Ed25519
+signature the DSH host makes**, with a private key that is not in this repository;
+the panel is the only thing that produces one.
+
+Writing `by: "human:founder"` into that file is not a shortcut, it is
+impersonating the person you work for. `opc doctor` reports it as a forged
+approval, `opc check-commit` refuses the commit, and the human sees it on the
+Company board.
+
+This was learned the hard way: an agent read the file, read the code that checks
+it, computed the mockup hash itself and wrote itself an approval, then reported
+"0 errors, done". Do not be that agent.
+
+The same applies to every gate. If a check blocks you, fix the artefact or
+escalate to the founder. Do not use `git commit --no-verify`. Do not re-label
+tasks to make them pass. The gate is the product's quality, not paperwork.
+
 ## The rules that make it work
 
 - **The spec is the contract.** No work starts before it is approved. `doctor`
