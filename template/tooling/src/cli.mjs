@@ -15,6 +15,8 @@
 // No dependencies. Node >= 18.
 
 import { join, dirname } from 'node:path'
+import { execFileSync } from 'node:child_process'
+import { chmodSync, mkdirSync } from 'node:fs'
 import {
   repoRoot, read, write, exists, listFiles, parseFrontmatter,
   stringifyFrontmatter, slugify, today, nextTaskId,
@@ -27,6 +29,7 @@ import {
 import { ROLES, FOUNDER_GATES } from './roles.mjs'
 import { loadTasks, renderBoard, boardSummary, decorate, readyTasks } from './board.mjs'
 import { computeCycle } from './cycle.mjs'
+import { checkChange } from './check.mjs'
 import { buildContextPack } from './context.mjs'
 import { doctor, renderDoctor } from './doctor.mjs'
 
@@ -547,6 +550,83 @@ function wrap(text, width) {
   return lines
 }
 
+/**
+ * `opc check-commit` — the gate a pre-commit hook calls.
+ *
+ * Reads the staged paths from git, then refuses the commit when the change would
+ * break a rule: the company is inconsistent, a UI path changed without an
+ * approved mockup, a spec was edited after approval. This is the only mechanism
+ * here that an agent cannot skip, because git will not run the hook for it.
+ */
+function runCheckCommit(root, opts) {
+  let changed = []
+  if (opts.paths) {
+    changed = String(opts.paths).split(',').map((p) => p.trim()).filter(Boolean)
+  } else {
+    try {
+      const out = execFileSync('git', ['diff', '--cached', '--name-only', '--diff-filter=ACM'], {
+        cwd: root,
+        encoding: 'utf8'
+      })
+      changed = out.split('\n').map((l) => l.trim()).filter(Boolean)
+    } catch {
+      console.error('opc: check-commit needs git, or pass --paths a,b,c')
+      process.exitCode = 1
+      return
+    }
+  }
+
+  const result = checkChange(root, changed, { skipDoctor: Boolean(opts['skip-doctor']) })
+  if (changed.length) {
+    console.log(`Checked ${changed.length} changed path(s).`)
+  }
+  for (const w of result.warnings) console.log(`  ! ${w}`)
+  for (const e of result.errors) console.log(`  ✗ ${e}`)
+  if (result.ok) {
+    console.log('  ✓ allowed')
+    return
+  }
+  console.log('')
+  console.log('Commit refused. Fix the above, or run: opc cycle')
+  process.exitCode = 1
+}
+
+/**
+ * `opc install-hooks` — write the pre-commit hook that runs the gate.
+ *
+ * Without this the gate is advice. With it, a violating change cannot be
+ * committed at all, whoever — or whatever — is making it.
+ */
+function installHooks(root) {
+  let gitDir
+  try {
+    gitDir = execFileSync('git', ['rev-parse', '--git-dir'], { cwd: root, encoding: 'utf8' }).trim()
+  } catch {
+    console.error('opc: not a git repository — run git init first')
+    process.exitCode = 1
+    return
+  }
+  const hooksDir = join(root, gitDir, 'hooks')
+  mkdirSync(hooksDir, { recursive: true })
+  const hookPath = join(hooksDir, 'pre-commit')
+  const hook = `#!/bin/sh
+# Installed by \`opc install-hooks\`.
+#
+# Refuses a commit that breaks a company rule: an inconsistent board, a UI path
+# changed without an approved mockup, a spec edited after approval.
+#
+# Bypass is \`git commit --no-verify\`, and it is logged in the commit message
+# review. Do not make a habit of it.
+node "$(git rev-parse --show-toplevel)/tooling/src/cli.mjs" check-commit
+`
+  write(hookPath, hook)
+  chmodSync(hookPath, 0o755)
+  console.log(`Installed ${hookPath}`)
+  console.log('')
+  console.log('Every commit now runs the company checks. To bypass deliberately:')
+  console.log('  git commit --no-verify')
+}
+
 function showBoard(root, opts) {
   const tasks = decorate(loadTasks(root), root)
   if (opts.json) {
@@ -632,6 +712,8 @@ function usage() {
   opc pack T-0001 [--roles owner,reviewer]
                                      the prompt for one task
   opc budget                         the spend ceilings
+  opc check-commit                   the gate a pre-commit hook calls
+  opc install-hooks                  install the pre-commit hook
 
   opc init                           scaffold the company OS
   opc new spec "Title"               create a feature spec
@@ -667,6 +749,8 @@ try {
     }
     case 'board': showBoard(root, { ready: flag('ready'), json: flag('json') }); break
     case 'budget': showBudget(root); break
+    case 'check-commit': runCheckCommit(root, { paths: flag('paths'), 'skip-doctor': flag('skip-doctor') }); break
+    case 'install-hooks': installHooks(root); break
     case 'cycle': showCycle(root); break
     case 'pack': showPack(root, argv[1], { roles: flag('roles') }); break
     case 'doctor': showDoctor(root); break

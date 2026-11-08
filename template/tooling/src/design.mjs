@@ -5,7 +5,7 @@
 // the doctor and the cycle cannot disagree about which tasks need a design.
 
 import { join } from 'node:path'
-import { exists, read } from './util.mjs'
+import { exists, read, hashBody } from './util.mjs'
 
 /**
  * The globs whose tasks need a mockup, from `company/design-scope.json`.
@@ -93,7 +93,14 @@ export function approvalOf(root, file) {
  */
 export function isApproved(root, file) {
   const rel = String(file).replace(/^\.?\/?design\//, '')
-  return readApprovals(root)[rel]?.approved === true
+  const approval = readApprovals(root)[rel]
+  if (approval?.approved !== true) return false
+  // The approval covers the file it was given, not the path. A mockup edited
+  // after approval is a different mockup, and nobody has looked at this one.
+  if (approval.mockupHash === undefined) return false
+  const absolute = join(root, String(file))
+  if (!exists(absolute)) return false
+  return approval.mockupHash === hashBody(read(absolute))
 }
 
 /**

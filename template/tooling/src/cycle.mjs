@@ -9,6 +9,7 @@
 
 import { join } from 'node:path'
 import { exists, read, listFiles, parseFrontmatter, hashBody } from './util.mjs'
+import { doctor } from './doctor.mjs'
 import { loadTasks, decorate, readyTasks } from './board.mjs'
 import { designScopeOf, awaitingDesign, mockupState, approvalOf } from './design.mjs'
 
@@ -62,7 +63,12 @@ export function computeCycle(root) {
     .map((t) => ({ task: t, approval: approvalOf(root, t.design) }))
     .filter((entry) => entry.approval !== null && entry.approval.approved === false)
 
+  // The checks come first. Offering "build the next task" while the company is
+  // inconsistent is how a shortcut becomes the default.
+  const report = doctor(root)
+
   const facts = {
+    checks: { errors: report.errors.length, warnings: report.warnings.length },
     charterFilled,
     specs: { total: specs.length, approved: approved.length, unapproved: unapproved.length },
     tasks: {
@@ -83,7 +89,15 @@ export function computeCycle(root) {
 
   // The first thing that is not done, in pipeline order.
   let stage
-  if (!charterFilled) {
+  if (report.errors.length > 0) {
+    stage = {
+      n: 0,
+      title: 'Fix the checks first',
+      detail: `${report.errors.length} thing(s) are inconsistent. Nothing else matters until they are fixed — ${report.errors[0]}`,
+      actor: 'agent',
+      prompt: `Run the one-person-company checks and fix everything they report, in order. The errors are: ${report.errors.slice(0, 8).join(' | ')}. Do not build anything, do not write application code: fix the company's artefacts — ownership, mockups, spec approvals, write scopes — and re-run the checks until there are no errors.`
+    }
+  } else if (!charterFilled) {
     stage = {
       n: 1,
       title: 'Write the charter',

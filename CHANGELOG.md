@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.10.0
+
+**The rules are now enforced where an agent cannot skip them.** Reported from a
+real project: an agent marked every task `agent:engineer`, skipped the designer
+and the mockup approval, and wrote the code. Nothing stopped it, because every
+rule was prose.
+
+- **`opc check-commit`** — a change-level gate: it reads the changed paths and
+  refuses when a UI path changed without a human-approved mockup, a spec was
+  edited after approval, or the company is inconsistent.
+- **`opc install-hooks`** writes it as the `pre-commit` hook, and `bootstrap.sh`
+  runs `git init` plus the hook, so a fresh workspace cannot be committed to in a
+  violating state. `--no-verify` still bypasses it — deliberately: a hook you
+  cannot bypass is a hook nobody installs, but bypassing is now a visible act.
+- **`opc cycle` reports Stage 0 — fix the checks first** whenever the doctor has
+  errors, so the panel can never offer "build the next task" on a broken board.
+- **An approval is bound to the mockup's hash.** Editing a mockup after approval
+  no longer inherits the approval; the same discipline the spec already had.
+- The skill and `AGENTS.md` say plainly that re-labelling work to get it through
+  is the failure mode these gates exist to stop.
+
 ## 0.9.1
 
 - **Fix: `opc new task --spec` crashed on the second use.** Reported from a real

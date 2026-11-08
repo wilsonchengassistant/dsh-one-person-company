@@ -148,6 +148,44 @@ Each charter declares four things — **reads**, **writes**, **never**, **done**
 That is what makes a role checkable rather than decorative. The `reviewer` is
 the important one: read-only, told to *assume the work is wrong*.
 
+## How the rules are enforced
+
+**A rule in a prompt is context. A rule in a gate is a control.** An agent can
+read "no engineer starts a UI task until its mockup is approved" and build anyway
+— it happens, and it is the failure mode this design exists to remove.
+
+So the same rule lives in four places, and only the last two are load-bearing:
+
+| Layer | Where | Can an agent skip it? |
+|---|---|---|
+| prose | `company/AGENTS.md`, the role charters, the skill | yes |
+| the next step | the panel's Stage card — a broken board shows *Stage 0 — fix the checks*, never *build this* | yes, by ignoring the panel |
+| **the commit** | **`opc check-commit` in a pre-commit hook** — a UI path that changed without an approved mockup is refused | **no** |
+| **the human** | the four decisions: charter, spec approval, the review verdict, the six founder gates | **no** |
+
+`bootstrap.sh` initialises a git repository if there is none and installs the
+hook, so a fresh workspace cannot be committed to in a violating state:
+
+```
+$ git commit -m "add ledger screen"
+Checked 5 changed path(s).
+  ✗ T-0001: mockup design/screens/ledger.html has not been approved by a human
+  ✗ doctor: company/specs/...-ledger.md: AC-2 is not owned by any task
+
+Commit refused. Fix the above, or run: opc cycle
+```
+
+`git commit --no-verify` still bypasses it — deliberately. A hook you cannot
+bypass is a hook nobody installs. But it is a visible, deliberate act rather than
+a silent shortcut.
+
+### Why the approval is tied to a hash
+
+Approving a mockup records the hash of the file. Editing the mockup afterwards
+does not carry the approval with it: the approval was for the thing you looked at,
+not for whatever is in the file now. Same for an approved spec — `approved_hash`
+means an edit after approval is an error until it is re-approved.
+
 ## A mockup before an engineer builds a screen — and you approve it
 
 `design/screens/<name>.html` is a **single-file interactive prototype**: its own

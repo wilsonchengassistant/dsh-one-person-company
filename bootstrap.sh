@@ -122,6 +122,30 @@ say "  + company/research/ (4 briefs)"
 say "Generating the per-project company files..."
 run "cd \"\$TARGET\" && node tooling/src/cli.mjs init"
 
+# --- version the workspace and install the gate --------------------------
+# A company workspace is a set of versioned artefacts, and the pre-commit hook is
+# the only check an agent cannot skip. Without a repository there is no hook, so
+# bootstrapping creates one when the target has none.
+if [ ! -d "$TARGET/.git" ]; then
+  if [ "$CHECK" -eq 1 ]; then
+    say "  [check] git init + install the pre-commit gate"
+  else
+    if ( cd "$TARGET" && git init -q ) 2>/dev/null; then
+      say "  + git repository"
+    else
+      say "  ! git not available — the pre-commit gate will not be installed"
+    fi
+  fi
+fi
+if [ -d "$TARGET/.git" ]; then
+  if [ "$CHECK" -eq 1 ]; then
+    say "  [check] opc install-hooks"
+  else
+    run "cd \"\$TARGET\" && node tooling/src/cli.mjs install-hooks >/dev/null 2>&1 || true"
+    say "  + pre-commit gate (opc check-commit)"
+  fi
+fi
+
 # --- health check ---------------------------------------------------------
 say ""
 if [ "$CHECK" -eq 1 ]; then
