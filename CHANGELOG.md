@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.13.0
+
+- **Middle-drag pans the flow.** A diagram you have to aim at a scrollbar to move
+  is a diagram nobody explores. Hold the middle button and drag.
+- **Zoom, with a minimap.** The toolbar has − / percentage / + / Fit over a set of
+  steps from 30% to 200%, and a minimap in the corner shows the whole graph with a
+  rectangle for what is on screen. Click the minimap to jump there.
+- **Fix: the hover card was being clipped.** It was a child of the scroll
+  container, so `overflow: auto` cut it off exactly when it mattered, and clamping
+  to the wrapper still let it fall off the bottom of the window. It is now
+  `position: fixed`, clamped to the viewport, and `box-sizing: border-box` so its
+  measured width includes its padding.
+- The toolbar (hint, zoom controls) moved out of the scroll container, so it no
+  longer scrolls away horizontally with the diagram.
+- `data-opc="flow-scroll"` and `data-opc="flow-minimap"` mark the two elements, so
+  the behaviour can be driven and verified from a test.
+
 ## 0.12.0
 
 - **A Flow view of the board.** A table answers "what is there"; a graph answers

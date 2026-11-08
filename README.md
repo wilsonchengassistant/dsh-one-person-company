@@ -116,6 +116,9 @@ tasks that depend on it, and an unmet dependency is a dashed amber arrow. Hover 
 node and everything unrelated dims while the whole task — owner, spec, write
 scope, mockup — appears next to the cursor.
 
+**Middle-drag to pan**, −/+ to zoom (30–200%), **Fit** to see the whole graph, and
+the minimap in the corner shows where you are inside it — click it to jump.
+
 ![The Company board](screenshots/board.png)
 
 The next step with its copy-the-prompt button, the consistency checks with what
