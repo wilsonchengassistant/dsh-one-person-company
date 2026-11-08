@@ -146,6 +146,17 @@ The question and the answer are **recorded and shown back to the human in
 Company board**. That is the point: an approval claiming a conversation the human
 never had is visible rather than hidden.
 
+**There is deliberately no signature on the record.** An agent with write access
+to the same repository can replace a public key as easily as it can edit a JSON
+file, so a signature would claim a guarantee nobody can check. `opc doctor`
+rejects a record that holds no question and no answer; the human reading the
+question back is the check that actually works.
+
+The record is writable too: rewriting the question, the answer or `mockupHash` in
+`design/approvals.json` can carry a stale approval onto a changed screen. Nothing
+in the repository prevents that. Do not do it — and keep the record honest and
+easy for the human to check.
+
 **Never run `opc approve` without having actually asked.** It is not a
 formality — it records a real decision, and the human sees the question you claim
 you asked.
@@ -173,16 +184,21 @@ they are owned artefacts rather than generated pictures.
 ## Never impersonate the founder
 
 An approval is the record of a conversation, not a flag you can set. It carries
-the question you asked, the answer the human gave, and a signature — and Company
-board shows the question and answer back to the human.
+the question you asked and the answer the human gave, and Company board shows both
+back to the human. Nothing else claims to prove it — the record is only as honest
+as you are.
 
 Writing an approval nobody gave is impersonating the person you work for.
-`opc doctor` reports it as forged, `opc check-commit` refuses the commit, and the
-human sees the question you claim you asked.
+`opc doctor` reports a record with no question and no answer as not usable,
+`opc check-commit` refuses the commit, and the human sees the question you claim
+you asked.
 
-This was learned the hard way: an agent read the file, read the code that checks
-it, computed the mockup hash itself and wrote itself an approval, then reported
-"0 errors, done". Do not be that agent.
+This was learned the hard way: an agent read the file, computed the mockup hash
+itself and wrote itself an approval, then reported "0 errors, done". Do not be
+that agent. An earlier version tried to make forgery impossible with a key held
+outside the repository; it was removed because an agent can mint a key and sign
+its own record. A rule the agent can satisfy by lying is enforced by the agent's
+honesty, so be honest — and keep the record easy for the human to check.
 
 The same applies to every gate. If a check blocks you, fix the artefact or
 escalate to the founder. Do not use `git commit --no-verify`. Do not re-label

@@ -6,7 +6,7 @@
 
 import { join } from 'node:path'
 import { exists, read, hashBody } from './util.mjs'
-import { verifyApproval } from './approval.mjs'
+import { approvalProblem } from './approval.mjs'
 
 /**
  * The globs whose tasks need a mockup, from `company/design-scope.json`.
@@ -140,36 +140,21 @@ export function isApproved(root, file) {
  * Why an approval does or does not hold.
  *
  * Three separate things have to be true, and they fail differently: the record
- * must be signed by the panel, it must cover the mockup's current bytes, and the
- * mockup must still exist.
+ * must carry the question and the answer it came from, it must cover the
+ * mockup's current bytes, and the mockup must still exist. There is deliberately
+ * no signature check — see the header of approval.mjs for why a key the agent can
+ * replace proves nothing.
  *
  * @param {string} root - Project root.
  * @param {string} file - Path such as `design/screens/capture.html`.
- * @returns {{ok: boolean, reason: 'unsigned' | 'forged' | 'stale' | 'missing' | '' , detail: string}}
+ * @returns {{ok: boolean, reason: 'unsigned' | 'rejected' | 'unrecorded' | 'stale' | 'missing' | '' , detail: string}}
  */
 export function approvalState(root, file) {
   const rel = String(file).replace(/^\.?\/?design\//, '')
   const approval = readApprovals(root)[rel]
-  if (approval?.approved !== true) {
-    return { ok: false, reason: 'unsigned', detail: 'no approval has been recorded' }
-  }
-  // The signature is the authority. Without it, the record is a claim by whoever
-  // wrote the file — which, in a repository agents work in, is not evidence.
-  // An approval without the conversation it came from is an assertion, not
-  // evidence — and the panel has nowhere to show it back to the human.
-  if (String(approval.via ?? '') !== 'ask_user') {
-    return {
-      ok: false,
-      reason: 'forged',
-      detail: 'the approval does not record the question it answered — approvals come from ask_user'
-    }
-  }
-  if (!String(approval.question ?? '').trim() || !String(approval.answer ?? '').trim()) {
-    return { ok: false, reason: 'forged', detail: 'the approval records no question or no answer' }
-  }
-  const verified = verifyApproval(root, rel, approval)
-  if (!verified.ok) {
-    return { ok: false, reason: 'forged', detail: verified.reason }
+  const problem = approvalProblem(approval)
+  if (problem !== null) {
+    return { ok: false, ...problem }
   }
   const absolute = join(root, String(file))
   if (!exists(absolute)) {

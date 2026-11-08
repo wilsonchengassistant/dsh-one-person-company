@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.15.0
+
+**An approval is a recorded conversation, not a signature.** 0.11.0 signed mockup
+approvals with an Ed25519 key held outside the repository; 0.14.0 moved the
+decision into the chat but kept the signature. Both are gone.
+
+Measured, not argued: an agent with write access to the same repository can
+generate its own key pair, overwrite `design/approval-key.pub`, and sign
+`approved: true` itself — after which `opc doctor` reported **0 errors** and
+`opc check-commit` allowed the commit. A guarantee that the gated agent can mint
+is worse than a plain instruction, because it tells the human there is nothing
+left to check.
+
+- `opc approve` now records the question, the answer, the spec version and the
+  mockup hash. No key, no signature, no `~/.dsh/one-person-company/approval.key`,
+  and it no longer writes `design/approval-key.pub`.
+- `opc doctor` and `opc check-commit` still refuse a mockup whose record holds no
+  question or no answer, and still treat a mockup edited after approval as stale.
+  That is the mechanical part; the human reading the record back is the check that
+  actually works, and the instruction now says so in `company/AGENTS.md`, the
+  skill and the playbook.
+- Company board gained a **Mockups and approvals** list: every mockup with its
+  state and its recorded question/answer, including approvals that hold (before
+  this, a valid approval was never shown anywhere). A mockup with no record now
+  renders the "you have not been asked yet" line that existed but was dead.
+- Rejected mockups are reported as `rejected` rather than `unsigned`, so the
+  panel can tell "never asked" from "you asked for changes".
+- Migration: 0.14-era signed records stay valid — the signature is ignored and
+  the question and answer still count. Records written by the 0.11–0.13 panel
+  button carried no question or answer, so 0.15 reports them as not usable until
+  a real conversation is recorded. `design/approval-key.pub` and
+  `~/.dsh/one-person-company/approval.key` are unused and can be deleted; nothing
+  reads them. A workspace whose approvals were written by hand (no question and
+  no answer) will show those mockups as not usable until `opc approve` records a
+  real conversation.
+
 ## 0.14.2
 
 - **Removed a whole bootstrapped workspace that was committed into the repository

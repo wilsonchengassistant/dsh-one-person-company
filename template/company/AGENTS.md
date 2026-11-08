@@ -58,8 +58,10 @@ conversation is the approval. Two steps, always in this order:
 
 The question and the answer are stored and shown back in Company board. Never run
 `opc approve` without having asked: writing an approval nobody gave is
-impersonating the founder, `opc doctor` reports it as forged, and the human sees
-the question you claim you asked.
+impersonating the founder, and `opc doctor` reports a record with no question and
+no answer as not usable. There is no signature to hide behind — the record is only
+as honest as you are, and the human can see that the question they are reading is
+one they never answered.
 
 The same applies to every gate: if a check blocks you, fix the artefact or
 escalate. Do not look for the door.

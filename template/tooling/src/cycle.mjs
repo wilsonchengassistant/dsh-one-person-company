@@ -12,6 +12,7 @@ import { exists, read, listFiles, parseFrontmatter, hashBody } from './util.mjs'
 import { doctor } from './doctor.mjs'
 import { loadTasks, decorate, readyTasks } from './board.mjs'
 import { designScopeOf, awaitingDesign, mockupState, approvalOf, approvalState } from './design.mjs'
+import { conversationOf } from './approval.mjs'
 
 /**
  * @param {string} root - Project root (the directory containing `company/`).
@@ -68,32 +69,49 @@ export function computeCycle(root) {
   const report = doctor(root)
 
   // Mockups waiting for the human. This is exposed independently of the stage so
-  // the panel can always offer the Approve button — including at Stage 0, which
-  // is exactly where a forged or stale approval puts you. A gate whose only fix
-  // is behind the gate is a deadlock.
+  // the panel can always show the recorded conversation — including at Stage 0,
+  // which is exactly where a broken or stale approval puts you. A gate whose only
+  // fix is behind the gate is a deadlock.
   // Any task with a mockup whose approval does not hold — whatever its status.
-  // A done task with a forged approval still needs the human to look at the
-  // screen, and blocking that behind the stage that the forgery created would be
-  // a deadlock.
+  // A done task with an unusable approval still needs the human to look at the
+  // screen, and blocking that behind the stage the problem created would be a
+  // deadlock.
   const pendingMockups = tasks
     .filter((task) => task.design && String(task.design).trim().toLowerCase() !== 'none')
     .filter((task) => task.status !== 'dropped')
     .map((task) => ({ task, state: approvalState(root, task.design) }))
-    .filter((entry) => ['unsigned', 'forged', 'stale'].includes(entry.state.reason))
+    .filter((entry) => ['unsigned', 'unrecorded', 'rejected', 'stale'].includes(entry.state.reason))
     .map((entry) => {
       // Show back what the agent says the human answered. An approval that claims a
       // conversation the human never had is then visible rather than hidden.
-      const record = approvalOf(root, entry.task.design)
+      const record = conversationOf(approvalOf(root, entry.task.design))
       return {
         file: String(entry.task.design),
         taskId: entry.task.id,
         taskTitle: String(entry.task.title ?? ''),
         reason: entry.state.reason,
         detail: entry.state.detail,
-        record:
-          record === null
-            ? null
-            : { via: record.via ?? '', question: record.question ?? '', answer: record.answer ?? '', at: record.at ?? '' }
+        record
+      }
+    })
+
+  // Every mockup, with the conversation that approved it. An approval is only
+  // checkable if the human can read the question and the answer back — including
+  // when the approval holds, which is exactly when there is no "pending" card to
+  // show. The panel renders this list next to the mockup preview.
+  const mockups = tasks
+    .filter((task) => task.design && String(task.design).trim().toLowerCase() !== 'none')
+    .filter((task) => task.status !== 'dropped')
+    .map((task) => {
+      const state = approvalState(root, task.design)
+      return {
+        file: String(task.design),
+        taskId: task.id,
+        taskTitle: String(task.title ?? ''),
+        ok: state.ok,
+        reason: state.reason,
+        detail: state.detail,
+        record: conversationOf(approvalOf(root, task.design))
       }
     })
 
@@ -248,5 +266,5 @@ export function computeCycle(root) {
     }
   }
 
-  return { facts, stage: { ...stage, walkthrough }, pendingMockups }
+  return { facts, stage: { ...stage, walkthrough }, pendingMockups, mockups }
 }

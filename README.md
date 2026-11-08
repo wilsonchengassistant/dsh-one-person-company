@@ -63,7 +63,7 @@ result is real, and the board tells you what is left.
 | **Copy the prompt for the agent** | puts the exact instruction in your clipboard |
 | **Run the checks** | runs the ~30 consistency checks on the host and lists what it found |
 | **The board** | every task with status, owner, priority and dependencies |
-| **The mockup** | rendered inline when a screen is waiting for your review — play with the states, then approve or request changes |
+| **The mockup** | rendered inline when a screen is waiting for your review — play with the states; approval happens in the chat, and the recorded question/answer is shown back to you |
 | **Bootstrap this workspace** | creates the company OS in a folder that has none |
 
 ### For agents and CI, not for you
@@ -171,8 +171,8 @@ So the same rule lives in four places, and only the last two are load-bearing:
 |---|---|---|
 | prose | `company/AGENTS.md`, the role charters, the skill | yes |
 | the next step | the panel's Stage card — a broken board shows *Stage 0 — fix the checks*, never *build this* | yes, by ignoring the panel |
-| **the commit** | **`opc check-commit` in a pre-commit hook** — a UI path that changed without an approved mockup is refused | **no** |
-| **the human** | the four decisions: charter, spec approval, the review verdict, the six founder gates | **no** |
+| **the commit** | **`opc check-commit` in a pre-commit hook** — a UI path that changed without a recorded approval is refused | **no**, except `--no-verify` |
+| **the human** | the four decisions: charter, spec approval, the review verdict, the six founder gates — and the panel shows you what you were asked | **you are the check** |
 
 `bootstrap.sh` initialises a git repository if there is none and installs the
 hook, so a fresh workspace cannot be committed to in a violating state:
@@ -190,12 +190,34 @@ Commit refused. Fix the above, or run: opc cycle
 bypass is a hook nobody installs. But it is a visible, deliberate act rather than
 a silent shortcut.
 
+### What the gates do and do not prove
+
+The commit gate and the doctor are mechanical: they check that an approval record
+exists, that it holds a question and an answer, and that the mockup has not
+changed since. They **cannot** prove a human answered — an agent with write access
+to this repository can write any JSON it likes. So an approval is deliberately a
+recorded conversation, not a signature: the panel shows the question and the
+answer back to you, and a conversation you never had is visible.
+
+An earlier version signed approvals with an Ed25519 key held outside the
+repository. It was removed in 0.15.0 because an agent can mint its own key,
+overwrite `design/approval-key.pub` and sign its own record — the doctor then
+reported zero errors. A guarantee the agent can forge is worse than a plain
+instruction, because it stops you looking.
+
+The record itself is writable too: the question, the answer and `mockupHash` all
+live in `design/approvals.json`, so an agent that rewrites the file can carry a
+stale approval onto a changed screen. Nothing in the repository prevents that.
+What you have instead is the record in front of you — a conversation you never had
+is something you can notice.
+
 ### Why the approval is tied to a hash
 
 Approving a mockup records the hash of the file. Editing the mockup afterwards
 does not carry the approval with it: the approval was for the thing you looked at,
 not for whatever is in the file now. Same for an approved spec — `approved_hash`
-means an edit after approval is an error until it is re-approved.
+means an edit after approval is an error until it is re-approved. The hash is
+change detection, not proof of who approved: see above.
 
 ## A mockup before an engineer builds a screen — and you approve it
 
@@ -215,9 +237,10 @@ Approval happens **in the chat**, not with a button:
 3. the agent records it with `opc approve <mockup> --question "..." --answer "..."`.
 
 The question and your answer are stored in `design/approvals.json` and shown back
-to you in Company board next to the mockup. An approval that records no
-conversation is treated as forged, which is what stops an agent from writing
-`approved: true` on its own behalf.
+to you in Company board next to the mockup. A record with no question and no
+answer is reported as not usable — but the real check is the one you can do:
+reading the question back and knowing whether you answered it. There is no
+signature, and that is deliberate; see *What the gates do and do not prove* above.
 
 A UI task an engineer owns cannot start until that approval exists; the designer's
 own tasks are exempt because they produce the mockups.

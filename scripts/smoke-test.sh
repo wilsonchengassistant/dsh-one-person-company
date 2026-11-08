@@ -64,6 +64,62 @@ run "opc cycle"           bash -c "cd '$TMP' && node tooling/src/cli.mjs cycle >
 ( cd "$TMP" && node tooling/src/cli.mjs doctor ) >"$TMP/out" 2>&1
 if grep -q "declares no design" "$TMP/out"; then ok "doctor catches a UI task with no mockup"; else bad "doctor did not catch the missing mockup"; fi
 
+# --- the approval model: a recorded conversation, no key material ---------
+# 0.15.0 removed the Ed25519 signature. These checks pin the two halves of the
+# replacement: a record with a question and an answer is an approval, a record
+# without one is not, and `opc approve` writes no key anywhere.
+TASK3="$(cd "$TMP" && ls company/tasks/T-0003-*.md 2>/dev/null | head -1)"
+mkdir -p "$TMP/design/screens"
+printf '<html><body>smoke</body></html>\n' > "$TMP/design/screens/ledger.html"
+( cd "$TMP" && node -e '
+const fs = require("fs");
+const p = process.argv[1];
+let s = fs.readFileSync(p, "utf8");
+s = s.replace(/^---\n([\s\S]*?)\n---/, (m, fm) => `---\n${fm}\ndesign: design/screens/ledger.html\n---`);
+fs.writeFileSync(p, s);
+' "$TASK3" ) >/dev/null 2>&1 \
+  && ok "attached a mockup to the UI task" || bad "could not attach the mockup to the UI task"
+
+mkdir -p "$TMP/home"
+run "opc approve records a conversation" \
+  bash -c "cd '$TMP' && HOME='$TMP/home' node tooling/src/cli.mjs approve design/screens/ledger.html --question 'Approve the smoke mockup?' --answer 'Approve' >/dev/null"
+
+[ -f "$TMP/design/approval-key.pub" ] \
+  && bad "opc approve still writes a public key" || ok "opc approve writes no key material in design/"
+
+if [ -n "$(find "$TMP/home" \( -name 'approval.key' -o -name 'approval.pub' \) 2>/dev/null)" ]; then
+  bad "opc approve wrote key material under HOME"
+else
+  ok "opc approve writes no key material under HOME"
+fi
+
+cp "$TMP/design/approvals.json" "$TMP/approvals-real.json"
+( cd "$TMP" && node tooling/src/cli.mjs doctor ) >"$TMP/out" 2>&1
+grep -q "has not been approved by a human" "$TMP/out" \
+  && bad "doctor rejected a recorded conversation" || ok "doctor accepts a recorded conversation"
+
+# A hand-written record with no question and answer is not an approval.
+( cd "$TMP" && node -e '
+const fs = require("fs");
+fs.writeFileSync("design/approvals.json", JSON.stringify({
+  "screens/ledger.html": { approved: true, at: "2026-01-01T00:00:00Z", by: "human:founder" }
+}, null, 2));
+' ) >/dev/null 2>&1
+( cd "$TMP" && node tooling/src/cli.mjs doctor ) >"$TMP/out" 2>&1
+grep -q "not usable" "$TMP/out" \
+  && ok "doctor rejects an approval with no conversation" || bad "doctor accepted a hand-written approval"
+
+# Old signed records stay valid: the signature is ignored, the conversation is not.
+( cd "$TMP" && node -e '
+const fs = require("fs");
+const current = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+for (const key of Object.keys(current)) current[key].sig = "an-old-signature-ignored-by-0.15";
+fs.writeFileSync("design/approvals.json", JSON.stringify(current, null, 2));
+' "$TMP/approvals-real.json" ) >/dev/null 2>&1
+( cd "$TMP" && node tooling/src/cli.mjs doctor ) >"$TMP/out" 2>&1
+grep -q "not usable" "$TMP/out" \
+  && bad "doctor rejected an old signed record" || ok "old signed records still validate"
+
 # .gitignore is written by bootstrap/init, not copied from the package.
 [ -f "$TMP/.gitignore" ] && ok ".gitignore was written" || bad ".gitignore is missing"
 

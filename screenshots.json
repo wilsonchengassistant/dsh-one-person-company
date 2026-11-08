@@ -10,8 +10,8 @@
     {
       "file": "screenshots/mockup-review.png",
       "caption": {
-        "en": "The mockup is rendered inside the panel and you can play with it. Approve it, or request changes with a reason.",
-        "zh": "mockup 直接渲染在面板里，可以直接玩。批准它，或写下理由要求修改。"
+        "en": "The mockup is rendered inside the panel and you can play with it. The question you were asked and the answer you gave are shown back to you; approval itself happens in the chat.",
+        "zh": "mockup 直接渲染在面板里，可以直接玩。你被问的问题同你给的答案会显示返出来；批准本身在对话里做。"
       }
     },
     {

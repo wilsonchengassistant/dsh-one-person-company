@@ -113,9 +113,10 @@ section "8. The bundled machine still matches its source workspace"
 SOURCE="${OPC_SOURCE:-$HOME/Documents/deepseek-harness/One Person Company}"
 if [ -d "$SOURCE" ]; then
   drift=0
-  for f in tooling/src/board.mjs tooling/src/cli.mjs tooling/src/context.mjs \
-           tooling/src/doctor.mjs tooling/src/roles.mjs tooling/src/templates.mjs \
-           tooling/src/util.mjs package.json .gitignore; do
+  for f in tooling/src/approval.mjs tooling/src/board.mjs tooling/src/check.mjs \
+           tooling/src/cli.mjs tooling/src/context.mjs tooling/src/cycle.mjs \
+           tooling/src/design.mjs tooling/src/doctor.mjs tooling/src/roles.mjs \
+           tooling/src/templates.mjs tooling/src/util.mjs package.json .gitignore; do
     if [ -f "$SOURCE/$f" ] && ! diff -q "$SOURCE/$f" "template/$f" >/dev/null 2>&1; then
       bad "template/$f differs from the source workspace — sync it"
       drift=$((drift+1))
@@ -126,6 +127,18 @@ if [ -d "$SOURCE" ]; then
     b=$(basename "$f")
     if ! diff -q "$f" "template/playbook/$b" >/dev/null 2>&1; then
       bad "template/playbook/$b differs from the source workspace — sync it"
+      drift=$((drift+1))
+    fi
+  done
+  if [ -f "$SOURCE/company/AGENTS.md" ] && ! diff -q "$SOURCE/company/AGENTS.md" "template/company/AGENTS.md" >/dev/null 2>&1; then
+    bad "template/company/AGENTS.md differs from the source workspace — sync it"
+    drift=$((drift+1))
+  fi
+  for f in "$SOURCE"/company/research/*.md; do
+    [ -e "$f" ] || continue
+    b=$(basename "$f")
+    if ! diff -q "$f" "template/company/research/$b" >/dev/null 2>&1; then
+      bad "template/company/research/$b differs from the source workspace — sync it"
       drift=$((drift+1))
     fi
   done
@@ -211,7 +224,7 @@ done
 
 # --------------------------------------------------------------------------
 if [ "$RELEASE" -eq 1 ]; then
-  section "11. Release artefacts"
+  section "13. Release artefacts"
   if npm pack --dry-run 2>&1 | grep -q 'template/tooling/src/cli.mjs'; then
     ok "the npm tarball includes the bundled machine"
   else

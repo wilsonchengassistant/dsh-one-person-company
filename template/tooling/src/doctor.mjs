@@ -168,8 +168,11 @@ export function doctor(root) {
       } else if (mockup === 'missing-file') {
         errors.push(`${t.id}: design ${t.design} does not exist`)
       } else if (mockup === 'unapproved') {
+        const approval = approvalOf(root, t.design)
         errors.push(
-          `${t.id}: design ${t.design} has not been approved by a human — ask with ask_user_question, then run opc approve`
+          approval?.approved === false
+            ? `${t.id}: you asked for changes to ${t.design} — rebuild the mockup, or amend the spec if the requirement itself changed`
+            : `${t.id}: design ${t.design} has not been approved by a human — ask with ask_user_question, then run opc approve`
         )
       }
     }
@@ -374,8 +377,8 @@ export function doctor(root) {
     const validity = approvalState(root, t.design)
     if (!validity.ok) {
       const label =
-        validity.reason === 'forged'
-          ? 'was not signed by the panel — it looks hand-written rather than recorded by opc approve'
+        validity.reason === 'unrecorded'
+          ? 'records no question and answer — the human can see they were never asked'
           : validity.reason === 'stale'
             ? 'changed after it was approved'
             : validity.detail

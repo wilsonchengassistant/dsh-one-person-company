@@ -102,6 +102,12 @@ records your answer with `opc approve`. The question and your answer are stored
 and shown back in Company board, which is what makes the approval checkable
 rather than asserted.
 
+There is deliberately **no signature** on the record. A key stored in this
+repository can be replaced by the same agent the gate is meant to stop, so it
+would only prove that a tool wrote a file, not that you answered. What the record
+gives you is the one check that actually works: you read the question and the
+answer back, and an approval for a conversation you never had is visible.
+
 ### When playing with the mockup changes the requirement
 
 It usually does. A mockup is the requirement in another language, and the moment

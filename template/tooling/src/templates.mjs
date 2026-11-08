@@ -499,8 +499,8 @@ float; anything a customer can lose has an audit table.
 // ---------------------------------------------------------------------------
 
 export const designApprovals = `{
-  "//": "One entry per screen the human has approved. Written by the Company board panel's Approve button. A mockup that is not listed here has not been approved, and no engineer may start its task.",
-  "//shape": { "screens/<name>.html": { "approved": true, "at": "<ISO>", "by": "human:founder" } }
+  "//": "One entry per screen the human has answered a question about, written by \`opc approve\`. An approval is the recorded conversation — the question the agent asked and the answer the human gave. There is no signature: nothing in this repository can prove a human answered, so the record is shown back to the human instead. An entry with no question and no answer is not an approval.",
+  "//shape": { "screens/<name>.html": { "approved": true, "via": "ask_user", "question": "<what the agent asked>", "answer": "<what the human chose>", "at": "<ISO>", "by": "human:founder", "specVersion": 1, "mockupHash": "<16 hex>" } }
 }
 `
 
@@ -537,8 +537,29 @@ design: design/screens/ledger.html
 \`\`\`
 
 \`opc doctor\` fails a UI task with no \`design:\`, or one pointing at a file that
-does not exist. That is the whole enforcement: the gate is a file that has to be
-there, not a promise in a prompt.
+does not exist, and it fails a mockup whose recorded approval has no question and
+no answer. That is the mechanical part.
+
+## How an approval is recorded
+
+An approval is a **conversation**, not a signature:
+
+1. the agent asks with \`ask_user_question\` — id \`opc-approve:<design path>\`,
+   options \`Approve\` / \`Request changes\`;
+2. the human answers in the chat;
+3. the agent records both with \`opc approve <design path> --question "..." --answer "..."\`.
+
+The record lives in \`design/approvals.json\` and Company board shows the question
+and the answer back to you. There is deliberately no cryptographic signature: an
+agent with write access to this repository can replace a public key as easily as
+it can edit a JSON file, so a signature would claim a guarantee nobody can check.
+The check you *can* do is reading it: if you never answered that question, the
+approval is fabricated, and it is visible.
+
+The record is writable too — an agent that rewrites the question, the answer or
+the mockup hash in that file can carry a stale approval forward. Nothing in this
+repository can prevent that. What you have is the record in front of you and the
+fact that a conversation you never had is noticeable.
 
 ## What a mockup has to contain
 

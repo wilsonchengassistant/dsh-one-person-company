@@ -16,8 +16,6 @@
 
 import { join, dirname, resolve } from 'node:path'
 import { execFileSync } from 'node:child_process'
-import { createPrivateKey, createPublicKey, generateKeyPairSync, sign } from 'node:crypto'
-import { homedir } from 'node:os'
 import { chmodSync, mkdirSync } from 'node:fs'
 import {
   hashBody, repoRoot, read, write, exists, listFiles, parseFrontmatter,
@@ -32,7 +30,6 @@ import { ROLES, FOUNDER_GATES } from './roles.mjs'
 import { loadTasks, renderBoard, boardSummary, decorate, readyTasks } from './board.mjs'
 import { computeCycle } from './cycle.mjs'
 import { checkChange } from './check.mjs'
-import { canonicalApproval } from './approval.mjs'
 import { buildContextPack } from './context.mjs'
 import { doctor, renderDoctor } from './doctor.mjs'
 
@@ -635,12 +632,13 @@ node "$(git rev-parse --show-toplevel)/tooling/src/cli.mjs" check-commit
  *
  * The approval is not a flag; it is the conversation. The agent asks with
  * `ask_user_question`, the human answers in the chat, and this command writes the
- * question, the answer and a signature so nothing can be quietly edited later.
+ * question and the answer down.
  *
- * The signature lives on the machine (`~/.dsh/one-person-company/approval.key`),
- * so it proves the record went through this command rather than through a text
- * editor. It cannot prove the question was asked — that is what the panel showing
- * the question and answer back to the human is for.
+ * There is deliberately no signature. A key stored on the machine, or a public
+ * key in the repository, can be replaced by the same agent the gate is meant to
+ * stop — see approval.mjs. What the human has instead is the question and the
+ * answer shown back to them: an approval can be fabricated, but a conversation
+ * they never had is visible.
  */
 function approveDesignFile(root, opts) {
   const file = String(opts.file ?? opts.positional ?? '')
@@ -649,7 +647,7 @@ function approveDesignFile(root, opts) {
     process.exitCode = 1
     return
   }
-  const rel = file.replace(/^\.\/?/, '').replace(/^design\//, '')
+  const rel = String(file).replace(/^\.\/?/, '').replace(/^design\//, '')
   const absolute = join(root, 'design', rel)
   if (!exists(absolute)) {
     console.error(`opc: no mockup at design/${rel}`)
@@ -688,21 +686,6 @@ function approveDesignFile(root, opts) {
     mockupHash: hashBody(read(absolute))
   }
 
-  const keyPath = join(homedir(), '.dsh', 'one-person-company', 'approval.key')
-  let privateKey
-  if (exists(keyPath)) {
-    privateKey = createPrivateKey(read(keyPath))
-  } else {
-    const pair = generateKeyPairSync('ed25519')
-    mkdirSync(join(homedir(), '.dsh', 'one-person-company'), { recursive: true, mode: 0o700 })
-    write(keyPath, pair.privateKey.export({ type: 'pkcs8', format: 'pem' }))
-    privateKey = pair.privateKey
-  }
-  const publicKey = createPublicKey(privateKey).export({ type: 'spki', format: 'pem' })
-  write(join(root, 'design', 'approval-key.pub'), publicKey)
-
-  record.sig = sign(null, Buffer.from(canonicalApproval({ ...record, file: rel }), 'utf8'), privateKey).toString('base64')
-
   const approvalsPath = join(root, 'design', 'approvals.json')
   let current = {}
   if (exists(approvalsPath)) {
@@ -719,7 +702,7 @@ function approveDesignFile(root, opts) {
   console.log(`  asked : ${question}`)
   console.log(`  answer: ${answer}`)
   console.log('')
-  console.log('It carries the question and the answer, so Company board shows them back to the human.')
+  console.log('The question and the answer are kept so Company board shows them back to the human.')
 }
 
 function showBoard(root, opts) {
