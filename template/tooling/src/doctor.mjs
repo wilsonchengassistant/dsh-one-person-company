@@ -88,6 +88,40 @@ function globOverlap(a, b) {
   return false
 }
 
+/**
+ * The acceptance criteria a task *claims to deliver*.
+ *
+ * A task body mentions AC-n in two different ways, and only one of them is a
+ * claim about the spec:
+ *
+ *   | AC-3 | T-0005 | ... |     a coverage row — the task claims spec AC-3
+ *   - [ ] AC-3                  a bare bullet — the task claims spec AC-3
+ *   - [ ] AC-3: some text       the task DEFINES its own criterion
+ *
+ * The third form is common and legitimate: a task that builds the test suite
+ * numbers its own criteria after the spec's, and a check that treated those as
+ * spec references reported every such task as broken. Only the first two are
+ * claims, and only those are checked.
+ *
+ * @param {string} body - A task body, front matter removed.
+ * @returns {number[]} the AC numbers the task claims to deliver.
+ */
+function specClaims(body) {
+  const numbers = new Set()
+  for (const line of String(body).split('\n')) {
+    // A coverage row: a pipe table whose first cell is the criterion.
+    const cell = /^\s*\|\s*AC-(\d+)\s*\|/.exec(line)
+    if (cell !== null) {
+      numbers.add(cell[1])
+      continue
+    }
+    // A bare bullet: the label and nothing else.
+    const bullet = /^\s*[-*]\s*\[\s*\]\s*AC-(\d+)\s*$/.exec(line)
+    if (bullet !== null) numbers.add(bullet[1])
+  }
+  return [...numbers]
+}
+
 export function doctor(root) {
   const errors = []
   const warnings = []
@@ -164,7 +198,14 @@ export function doctor(root) {
     if (t.status !== 'dropped') {
       const mockup = mockupState(t, uiGlobs, root)
       if (mockup === 'missing-field') {
-        errors.push(`${t.id}: writes a UI path but declares no design: — a mockup in design/screens/ must exist first`)
+        // The mockup gate is a gate on *starting*. A task that already ran cannot be
+        // retroactively blocked, and a board that is permanently red because of
+        // work finished last month is a board people learn to ignore. A task that
+        // has begun without a mockup is still worth seeing — that is exactly the
+        // failure this rule exists to catch — so it is a warning.
+        const message = `${t.id}: writes a UI path but declares no design: — a mockup in design/screens/ must exist first`
+        if (STARTED_STATUSES.includes(t.status)) warnings.push(`${message} (this task is already ${t.status})`)
+        else errors.push(message)
       } else if (mockup === 'missing-file') {
         errors.push(`${t.id}: design ${t.design} does not exist`)
       } else if (mockup === 'unapproved') {
@@ -360,7 +401,7 @@ export function doctor(root) {
     const spec = specs.get(t.spec)
     if (!spec) continue
     const { body } = parseFrontmatter(read(t.path))
-    const claimed = [...new Set([...body.matchAll(/AC-(\d+)/g)].map((m) => `AC-${m[1]}`))]
+    const claimed = [...new Set([...specClaims(body)].map((m) => `AC-${m}`))]
     const gone = claimed.filter((ac) => !new RegExp(`\\b${ac}\\b`).test(spec.body))
     if (gone.length) {
       errors.push(`${t.id}: claims ${gone.join(', ')}, which the spec no longer has — re-scope the task`)

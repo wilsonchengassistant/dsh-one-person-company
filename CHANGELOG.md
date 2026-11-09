@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.15.1
+
+Two doctor fixes, both found by running the checks against a real project
+(`opc-fna`, 28 tasks) rather than against a fixture.
+
+- **The mockup gate now applies to starting tasks only.** It blocked work that
+  was already done, so every project built before the gate existed went
+  permanently red — and a board that is always red is a board people learn to
+  ignore. A task that already ran without a mockup is still reported, as a
+  warning, because that is the failure the rule exists to catch.
+- **The acceptance-criterion check only looks at claims.** A task body mentions
+  `AC-n` two ways: a coverage row (`| AC-3 | T-0005 |`) or a bare bullet
+  (`- [ ] AC-3`) is a claim about the spec, while `- [ ] AC-3: some text` is the
+  task defining its own criterion. A task that builds the test suite numbers its
+  own criteria after the spec's, and the check reported every such task as
+  broken.
+
 ## 0.15.0
 
 **An approval is a recorded conversation, not a signature.** 0.11.0 signed mockup
